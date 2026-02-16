@@ -39,7 +39,7 @@ export default function BookingsPage() {
     const [searchParams] = useSearchParams()
     const preselectedApartmentId = searchParams.get('apartmentId')
 
-    const { data: bookings, loading, reload } = useApiData<BookingRow[]>('/bookings?size=200&sort=createdAt,desc', [])
+    const { data: bookings, loading, reload } = useApiData<BookingRow[]>('/bookings?size=200&sort=createdAt,desc', [], { pollingInterval: 10_000 })
     const [exec, createState] = useApiAction()
 
     const [statusFilter, setStatusFilter] = useState('')
