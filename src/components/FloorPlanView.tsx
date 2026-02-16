@@ -83,6 +83,13 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
 
 
 
+    const handleApartmentClick = useCallback((apt: Apartment) => {
+        setDetailApartment(apt)
+        setBookingStatus('idle')
+        setBookingError(null)
+        onApartmentClick?.(apt)
+    }, [onApartmentClick])
+
     return (
         <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50">
             {/* Верхняя панель: статистика + легенда */}
@@ -178,12 +185,7 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
                                 apartments={floorApartments}
                                 hoveredApartment={hoveredApartment}
                                 onApartmentHover={setHoveredApartment}
-                                onApartmentClick={(apt) => {
-                                    setDetailApartment(apt)
-                                    setBookingStatus('idle')  // Сброс статуса при выборе новой квартиры
-                                    setBookingError(null)
-                                    onApartmentClick?.(apt)
-                                }}
+                                onApartmentClick={handleApartmentClick}
                                 statusColors={STATUS_COLORS}
                             />
                         </div>

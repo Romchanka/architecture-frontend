@@ -57,10 +57,14 @@ export default function MarketplacePage() {
     }, [selectedCompanyId])
 
     // Загрузка квартир при выборе ЖК
+    // Buildings must load before apartments (apartments depend on building IDs)
     useEffect(() => {
         if (selectedCompanyId && selectedComplexId) {
-            fetchApartments()
-            fetchBuildings()
+            const loadData = async () => {
+                await fetchBuildings()
+                await fetchApartments()
+            }
+            loadData()
         }
     }, [selectedComplexId])
 
@@ -115,17 +119,14 @@ export default function MarketplacePage() {
             const { data } = await api.get<PagedResponse<Apartment>>('/marketplace/apartments', {
                 params: {
                     companyId: selectedCompanyId,
+                    complexId: selectedComplexId ?? undefined,
                     status: 'ALL',
                     page: 0,
                     size: 200
                 }
             })
-            // Фильтруем квартиры по зданиям выбранного ЖК
-            const complexBuildingIds = buildings.map(b => b.id)
-            const filtered = selectedComplexId && complexBuildingIds.length > 0
-                ? data.content.filter(a => complexBuildingIds.includes(a.buildingId))
-                : data.content
-            setApartments(filtered)
+            // Server-side filtering by complexId — no client filtering needed
+            setApartments(data.content)
         } catch (error) {
             console.error('Failed to fetch apartments:', error)
         } finally {

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Apartment } from '@/types'
 import { W, TW, BG, OW, AW, IW, B, CL, CR, ROW, CORR_H, LEFT_ZONES } from '@/lib/buildingGeometry'
 import {
@@ -15,7 +16,7 @@ interface FloorPlanSVGProps {
 }
 
 
-export default function FloorPlanSVG({
+const FloorPlanSVG = React.memo(function FloorPlanSVG({
     apartments, hoveredApartment, onApartmentHover, onApartmentClick, statusColors,
 }: FloorPlanSVGProps) {
 
@@ -280,4 +281,6 @@ export default function FloorPlanSVG({
             {zones(true, 5)}
         </svg>
     )
-}
+})
+
+export default FloorPlanSVG
