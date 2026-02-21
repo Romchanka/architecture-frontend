@@ -29,6 +29,14 @@ export default function Header() {
                         >
                             Каталог
                         </Link>
+                        {isAuthenticated && (
+                            <Link
+                                to="/profile"
+                                className="text-gray-700 hover:text-primary-600 transition-colors"
+                            >
+                                Профиль
+                            </Link>
+                        )}
                     </div>
 
                     {/* User menu */}
@@ -37,8 +45,11 @@ export default function Header() {
                             <>
                                 <Link
                                     to="/profile"
-                                    className="text-gray-700 hover:text-primary-600 transition-colors"
+                                    className="flex items-center gap-2 text-gray-700 hover:text-primary-600 transition-colors font-medium"
                                 >
+                                    <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-bold">
+                                        {user?.firstName?.[0] || '?'}
+                                    </span>
                                     {user?.firstName}
                                 </Link>
                                 <button

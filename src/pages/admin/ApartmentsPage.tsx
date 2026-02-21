@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { fmtPrice } from '@/lib/format'
 import { APARTMENT_STATUS_MAP } from '@/lib/statusMaps'
 import { useApiData } from '@/hooks/useApiData'
+import { useAdmin } from '@/components/AdminGuard'
+import api from '@/lib/api'
 import {
     AdminTable, Column, PageHeader, FilterBar, StatusBadge,
     Modal, ModalBody, ModalFooter, inputCls,
@@ -28,7 +30,9 @@ interface ApartmentRow {
 const STATUS_MAP = APARTMENT_STATUS_MAP
 
 export default function ApartmentsPage() {
-    const { data: apartments, loading } = useApiData<ApartmentRow[]>('/apartments?size=200', [])
+    const employee = useAdmin()
+    const canUpload = employee.userType === 'ADMIN' || employee.userType === 'SUPER_USER'
+    const { data: apartments, loading, reload } = useApiData<ApartmentRow[]>('/apartments?size=200', [])
 
     const [statusFilter, setStatusFilter] = useState('')
     const [roomsFilter, setRoomsFilter] = useState('')
@@ -36,6 +40,8 @@ export default function ApartmentsPage() {
     const [search, setSearch] = useState('')
     const [selected, setSelected] = useState<ApartmentRow | null>(null)
     const [calcArea, setCalcArea] = useState('')
+    const [uploading, setUploading] = useState(false)
+    const fileRef = useRef<HTMLInputElement>(null)
 
     const filtered = useMemo(() =>
         apartments.filter((a) => {
@@ -50,6 +56,26 @@ export default function ApartmentsPage() {
 
     const floors = useMemo(() => [...new Set(apartments.map((a) => a.floor))].sort((a, b) => a - b), [apartments])
     const rooms = useMemo(() => [...new Set(apartments.map((a) => a.rooms))].sort((a, b) => a - b), [apartments])
+
+    const handleLayoutUpload = async (apartmentId: number, file: File) => {
+        setUploading(true)
+        try {
+            const form = new FormData()
+            form.append('file', file)
+            const res = await api.post(`/files/upload/apartment-layout/${apartmentId}`, form, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            })
+            // Update selected apartment with new URL
+            if (selected) {
+                setSelected({ ...selected, layoutPlanUrl: res.data.url })
+            }
+            reload()
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Ошибка загрузки планировки')
+        } finally {
+            setUploading(false)
+        }
+    }
 
     const columns: Column<ApartmentRow>[] = [
         { header: 'Номер', render: (a) => <span className="text-sm text-white font-medium">№{a.apartmentNumber}</span> },
@@ -155,6 +181,68 @@ export default function ApartmentsPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Layout Plan Section — admin only */}
+                        {canUpload && (
+                            <div className="px-6 py-4 border-t border-gray-800">
+                                <h4 className="text-sm font-semibold text-white mb-3">🏗 Планировка квартиры</h4>
+                                {selected.layoutPlanUrl ? (
+                                    <div className="space-y-3">
+                                        <img
+                                            src={selected.layoutPlanUrl}
+                                            alt={`Планировка №${selected.apartmentNumber}`}
+                                            className="w-full rounded-lg border border-gray-700 max-h-64 object-contain bg-gray-800"
+                                        />
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-emerald-400">✅ Планировка загружена</span>
+                                            <button
+                                                onClick={() => fileRef.current?.click()}
+                                                className="text-xs text-amber-400 hover:text-amber-300 transition-colors ml-auto"
+                                                disabled={uploading}
+                                            >
+                                                {uploading ? 'Загрузка...' : 'Заменить'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => fileRef.current?.click()}
+                                        className="w-full border-2 border-dashed border-gray-700 hover:border-amber-500/50 rounded-lg p-6 text-center transition-colors group"
+                                        disabled={uploading}
+                                    >
+                                        <div className="text-3xl mb-2 opacity-40 group-hover:opacity-70">📁</div>
+                                        <div className="text-sm text-gray-500 group-hover:text-gray-400">
+                                            {uploading ? 'Загрузка...' : 'Нажмите чтобы загрузить планировку'}
+                                        </div>
+                                    </button>
+                                )}
+                                <input
+                                    ref={fileRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0]
+                                        if (file && selected) {
+                                            handleLayoutUpload(selected.id, file)
+                                        }
+                                        e.target.value = ''
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        {/* Show layout for non-admins if it exists */}
+                        {!canUpload && selected.layoutPlanUrl && (
+                            <div className="px-6 py-4 border-t border-gray-800">
+                                <h4 className="text-sm font-semibold text-white mb-3">🏗 Планировка квартиры</h4>
+                                <img
+                                    src={selected.layoutPlanUrl}
+                                    alt={`Планировка №${selected.apartmentNumber}`}
+                                    className="w-full rounded-lg border border-gray-700 max-h-64 object-contain bg-gray-800"
+                                />
+                            </div>
+                        )}
 
                         {selected.status === 'AVAILABLE' && (
                             <ModalFooter>

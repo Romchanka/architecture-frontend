@@ -116,6 +116,7 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
         { label: 'Дашборд', path: '/admin', icon: '📊' },
         { label: 'Платежи', path: '/admin/transactions', icon: '💰' },
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
+        { label: 'Отчёты', path: '/admin/reports', icon: '📈' },
     ],
     ADMIN: [
         { label: 'Дашборд', path: '/admin', icon: '📊' },

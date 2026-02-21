@@ -4,6 +4,7 @@ import { CONTRACT_STATUS_MAP } from '@/lib/statusMaps'
 import { contractApi } from '@/lib/api/contractApi'
 import { useApiData } from '@/hooks/useApiData'
 import { useApiAction } from '@/hooks/useApiAction'
+import { useAdmin } from '@/components/AdminGuard'
 import {
     AdminTable, Column, PageHeader, FilterBar, StatusBadge,
     Modal, ModalBody, ModalFooter, SubmitButton, ModalError,
@@ -32,6 +33,8 @@ interface ContractRow {
 const STATUS_MAP = CONTRACT_STATUS_MAP
 
 export default function ContractsPage() {
+    const employee = useAdmin()
+    const isReadOnly = employee.userType === 'ACCOUNTANT'
     const { data: contracts, loading, reload } = useApiData<ContractRow[]>('/contracts?size=200&sort=createdAt,desc', [])
     const [exec, createState] = useApiAction()
 
@@ -78,10 +81,13 @@ export default function ContractsPage() {
         {
             header: 'Действия', render: (c) => (
                 <div className="flex gap-2">
-                    {(c.status === 'DRAFT' || c.status === 'PENDING_SIGNATURE') && (
+                    {!isReadOnly && (c.status === 'DRAFT' || c.status === 'PENDING_SIGNATURE') && (
                         <button onClick={(e) => { e.stopPropagation(); exec(() => contractApi.sign(c.id), { confirm: 'Подписать договор?', onSuccess: reload }) }} className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors">Подписать</button>
                     )}
-                    {c.status !== 'CANCELLED' && c.status !== 'COMPLETED' && (
+                    {c.status !== 'PAID' && c.status !== 'COMPLETED' && c.status !== 'CANCELLED' && (
+                        <button onClick={(e) => { e.stopPropagation(); exec(() => contractApi.confirmPayment(c.id), { confirm: 'Подтвердить оплату? Квартира будет помечена как проданная.', onSuccess: reload }) }} className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors">💰 Оплата</button>
+                    )}
+                    {!isReadOnly && c.status !== 'CANCELLED' && c.status !== 'COMPLETED' && (
                         <button onClick={(e) => { e.stopPropagation(); exec(() => contractApi.cancel(c.id), { confirm: 'Отменить договор?', onSuccess: reload }) }} className="text-xs text-red-400 hover:text-red-300 transition-colors">Отмена</button>
                     )}
                     <button onClick={(e) => { e.stopPropagation(); handleDownload(c.id) }} className="text-xs text-blue-400 hover:text-blue-300 transition-colors">PDF</button>
@@ -92,7 +98,7 @@ export default function ContractsPage() {
 
     return (
         <div>
-            <PageHeader title="Договоры" count={filtered.length} actionLabel="+ Создать из бронирования" onAction={() => setShowCreate(true)} />
+            <PageHeader title="Договоры" count={filtered.length} actionLabel={isReadOnly ? undefined : '+ Создать из бронирования'} onAction={isReadOnly ? undefined : () => setShowCreate(true)} />
 
             <FilterBar>
                 <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectCls}>

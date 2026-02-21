@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import AdminLayout from './components/layout/AdminLayout'
 import AdminGuard from './components/AdminGuard'
+import RoleRoute from './components/RoleRoute'
 import HomePage from './pages/HomePage'
 import MarketplacePage from './pages/MarketplacePage'
 import LoginPage from './pages/LoginPage'
@@ -34,7 +35,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-            {/* Admin routes */}
+            {/* Admin routes — role-protected */}
             <Route
                 path="/admin"
                 element={
@@ -44,13 +45,13 @@ function App() {
                 }
             >
                 <Route index element={<AdminDashboard />} />
-                <Route path="apartments" element={<ApartmentsPage />} />
-                <Route path="bookings" element={<BookingsPage />} />
-                <Route path="contracts" element={<ContractsPage />} />
-                <Route path="parking" element={<ParkingPage />} />
-                <Route path="transactions" element={<TransactionsPage />} />
-                <Route path="employees" element={<EmployeesPage />} />
-                <Route path="reports" element={<ReportsPage />} />
+                <Route path="apartments" element={<RoleRoute path="/admin/apartments"><ApartmentsPage /></RoleRoute>} />
+                <Route path="bookings" element={<RoleRoute path="/admin/bookings"><BookingsPage /></RoleRoute>} />
+                <Route path="contracts" element={<RoleRoute path="/admin/contracts"><ContractsPage /></RoleRoute>} />
+                <Route path="parking" element={<RoleRoute path="/admin/parking"><ParkingPage /></RoleRoute>} />
+                <Route path="transactions" element={<RoleRoute path="/admin/transactions"><TransactionsPage /></RoleRoute>} />
+                <Route path="employees" element={<RoleRoute path="/admin/employees"><EmployeesPage /></RoleRoute>} />
+                <Route path="reports" element={<RoleRoute path="/admin/reports"><ReportsPage /></RoleRoute>} />
             </Route>
         </Routes>
     )

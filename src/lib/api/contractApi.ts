@@ -20,8 +20,11 @@ export const contractApi = {
     sign: (id: number) =>
         api.put(`/contracts/${id}/sign`),
 
+    confirmPayment: (id: number) =>
+        api.put(`/contracts/${id}/confirm-payment`),
+
     cancel: (id: number) =>
-        api.put(`/contracts/${id}/cancel`),
+        api.delete(`/contracts/${id}`),
 
     downloadPdf: (id: number) =>
         api.get(`/contracts/${id}/document`, { responseType: 'blob' }),
