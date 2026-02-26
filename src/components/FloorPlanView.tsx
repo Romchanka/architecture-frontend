@@ -93,47 +93,47 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
     return (
         <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50">
             {/* Верхняя панель: статистика + легенда */}
-            <div className="bg-slate-800/80 border-b border-slate-700/50 px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-8">
+            <div className="bg-slate-800/80 border-b border-slate-700/50 px-3 sm:px-6 py-3 sm:py-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-4 sm:gap-8">
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-white">{stats.total}</div>
-                            <div className="text-xs text-slate-400">Всего</div>
+                            <div className="text-lg sm:text-2xl font-bold text-white">{stats.total}</div>
+                            <div className="text-[10px] sm:text-xs text-slate-400">Всего</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-green-400">{stats.available}</div>
-                            <div className="text-xs text-slate-400">Свободно</div>
+                            <div className="text-lg sm:text-2xl font-bold text-green-400">{stats.available}</div>
+                            <div className="text-[10px] sm:text-xs text-slate-400">Свободно</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-amber-400">{stats.booked}</div>
-                            <div className="text-xs text-slate-400">Бронь</div>
+                            <div className="text-lg sm:text-2xl font-bold text-amber-400">{stats.booked}</div>
+                            <div className="text-[10px] sm:text-xs text-slate-400">Бронь</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-red-400">{stats.sold}</div>
-                            <div className="text-xs text-slate-400">Продано</div>
+                            <div className="text-lg sm:text-2xl font-bold text-red-400">{stats.sold}</div>
+                            <div className="text-[10px] sm:text-xs text-slate-400">Продано</div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                         {Object.entries(STATUS_COLORS).filter(([k]) => k !== 'PREBOOKED').map(([key, color]) => (
-                            <div key={key} className="flex items-center gap-1.5">
-                                <div className={`w-3 h-3 rounded-sm ${color.bg}`} />
-                                <span className="text-xs text-slate-300">{color.label}</span>
+                            <div key={key} className="flex items-center gap-1">
+                                <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm ${color.bg}`} />
+                                <span className="text-[10px] sm:text-xs text-slate-300">{color.label}</span>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
 
-            <div className="flex">
-                {/* Левая боковая панель: выбор этажа */}
-                <div className="w-16 bg-slate-800/50 border-r border-slate-700/30 flex flex-col items-center py-3">
-                    <div className="text-xs text-slate-500 mb-2 font-medium">Этаж</div>
-                    <div className="flex flex-col gap-1 overflow-y-auto max-h-[500px] scrollbar-thin">
+            <div className="flex flex-col sm:flex-row">
+                {/* Боковая панель: выбор этажа (горизонтальный скролл на mobile, вертикальный на desktop) */}
+                <div className="sm:w-16 bg-slate-800/50 border-b sm:border-b-0 sm:border-r border-slate-700/30 flex sm:flex-col items-center py-2 sm:py-3 px-3 sm:px-0">
+                    <div className="text-xs text-slate-500 mr-2 sm:mr-0 sm:mb-2 font-medium whitespace-nowrap">Этаж</div>
+                    <div className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto max-h-[500px] scrollbar-thin">
                         {availableFloors.slice().reverse().map(floor => (
                             <button
                                 key={floor}
                                 onClick={() => setSelectedFloor(floor)}
-                                className={`w-10 h-8 rounded-md text-sm font-medium transition-all ${selectedFloor === floor
+                                className={`w-9 h-8 sm:w-10 rounded-md text-sm font-medium transition-all flex-shrink-0 ${selectedFloor === floor
                                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                                     : 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
                                     }`}
@@ -145,11 +145,12 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
                 </div>
 
                 {/* Основная область: схема блокирования */}
-                <div className="flex-1 p-6" onMouseMove={handleMouseMove}>
+                <div className="flex-1 p-3 sm:p-6 overflow-x-auto" onMouseMove={handleMouseMove}>
                     {/* Заголовок */}
                     <div className="text-center mb-4">
-                        <h3 className="text-xl text-slate-200 tracking-[0.3em] font-light">
-                            С х е м а  б л о к и р о в а н и я
+                        <h3 className="text-lg sm:text-xl text-slate-200 tracking-normal sm:tracking-[0.3em] font-light">
+                            <span className="hidden sm:inline">С х е м а  б л о к и р о в а н и я</span>
+                            <span className="sm:hidden">Схема блокирования</span>
                         </h3>
                         <p className="text-sm text-slate-500 mt-1">
                             {selectedBuilding?.name || 'Корпус А'} • ЖК Montana • {selectedFloor} этаж
@@ -254,11 +255,11 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
             {/* Модальное окно — подробная планировка */}
             {detailApartment && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+                    className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm"
                     onClick={() => setDetailApartment(null)}
                 >
                     <div
-                        className="relative bg-slate-900 rounded-2xl shadow-2xl border border-slate-600/50 max-w-3xl w-full mx-4 overflow-hidden"
+                        className="relative bg-slate-900 sm:rounded-2xl rounded-t-2xl shadow-2xl border border-slate-600/50 max-w-3xl w-full sm:mx-4 overflow-hidden max-h-[90vh] sm:max-h-none overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Шапка */}

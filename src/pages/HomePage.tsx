@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
+import { useAuthStore } from '@/store/authStore'
 
 export default function HomePage() {
+    const { isAuthenticated } = useAuthStore()
+
     return (
         <div className="min-h-screen">
             {/* Hero Section */}
@@ -69,23 +72,43 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* CTA */}
+            {/* CTA — different for guests vs authenticated users */}
             <section className="py-16 bg-primary-600 text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h2 className="text-3xl font-bold mb-4">
-                        Готовы найти свою квартиру?
-                    </h2>
-                    <p className="text-xl mb-8 text-primary-100">
-                        Зарегистрируйтесь и получите доступ ко всем возможностям платформы
-                    </p>
-                    <Link
-                        to="/register"
-                        className="inline-block bg-white text-primary-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
-                    >
-                        Зарегистрироваться
-                    </Link>
+                    {isAuthenticated ? (
+                        <>
+                            <h2 className="text-3xl font-bold mb-4">
+                                Выберите квартиру прямо сейчас
+                            </h2>
+                            <p className="text-xl mb-8 text-primary-100">
+                                Откройте каталог и забронируйте квартиру в несколько кликов
+                            </p>
+                            <Link
+                                to="/marketplace"
+                                className="inline-block bg-white text-primary-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
+                            >
+                                Перейти в каталог
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <h2 className="text-3xl font-bold mb-4">
+                                Готовы найти свою квартиру?
+                            </h2>
+                            <p className="text-xl mb-8 text-primary-100">
+                                Зарегистрируйтесь и получите доступ ко всем возможностям платформы
+                            </p>
+                            <Link
+                                to="/register"
+                                className="inline-block bg-white text-primary-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
+                            >
+                                Зарегистрироваться
+                            </Link>
+                        </>
+                    )}
                 </div>
             </section>
         </div>
     )
 }
+

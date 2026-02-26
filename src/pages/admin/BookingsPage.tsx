@@ -5,6 +5,8 @@ import { BOOKING_STATUS_MAP } from '@/lib/statusMaps'
 import { bookingApi } from '@/lib/api/bookingApi'
 import { useApiData } from '@/hooks/useApiData'
 import { useApiAction } from '@/hooks/useApiAction'
+import { useEventSource } from '@/hooks/useEventSource'
+import { useToast, ToastContainer } from '@/components/Toast'
 import {
     AdminTable, Column, PageHeader, FilterBar, StatusBadge,
     Modal, ModalBody, ModalFooter, SubmitButton, ModalError,
@@ -39,8 +41,21 @@ export default function BookingsPage() {
     const [searchParams] = useSearchParams()
     const preselectedApartmentId = searchParams.get('apartmentId')
 
-    const { data: bookings, loading, reload } = useApiData<BookingRow[]>('/bookings?size=200&sort=createdAt,desc', [], { pollingInterval: 10_000 })
+    // Загрузка данных без polling — обновление через SSE
+    const { data: bookings, loading, reload } = useApiData<BookingRow[]>('/bookings?size=200&sort=createdAt,desc', [])
     const [exec, createState] = useApiAction()
+    const { toasts, show: showToast } = useToast()
+
+    // SSE: подписка на real-time уведомления о бронированиях
+    useEventSource({
+        eventTypes: ['booking_created', 'booking_updated'],
+        onEvent: (event) => {
+            const { apartmentNumber, userName } = event.data
+            const label = event.type === 'booking_created' ? 'Новое бронирование' : 'Обновление'
+            showToast(`${label}: Кв. №${apartmentNumber} — ${userName || 'Покупатель'}`, event.type === 'booking_created' ? 'warning' : 'info')
+            reload()
+        },
+    })
 
     const [statusFilter, setStatusFilter] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
@@ -127,6 +142,7 @@ export default function BookingsPage() {
 
     return (
         <div>
+            <ToastContainer toasts={toasts} />
             <PageHeader title="Бронирования" count={filtered.length} actionLabel="+ Новое бронирование" onAction={() => setShowCreate(true)} />
 
             <FilterBar>
