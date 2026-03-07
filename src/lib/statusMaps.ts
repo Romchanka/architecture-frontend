@@ -29,7 +29,8 @@ export const APARTMENT_STATUS_MAP: StatusMap = {
 // ── Contract ──
 export const CONTRACT_STATUS_MAP: StatusMap = {
     DRAFT: { label: 'Черновик', cls: 'bg-gray-500/10 text-gray-400' },
-    PENDING_SIGNATURE: { label: 'На подписание', cls: 'bg-yellow-500/10 text-yellow-400' },
+    PENDING_BUYER_SIGNATURE: { label: 'Ожидает подписи покупателя', cls: 'bg-yellow-500/10 text-yellow-400' },
+    PENDING_COMPANY_SIGNATURE: { label: 'Ожидает подписи компании', cls: 'bg-orange-500/10 text-orange-400' },
     SIGNED: { label: 'Подписан', cls: 'bg-emerald-500/10 text-emerald-400' },
     IN_PAYMENT: { label: 'Оплата', cls: 'bg-blue-500/10 text-blue-400' },
     PAID: { label: 'Оплачен', cls: 'bg-purple-500/10 text-purple-400' },

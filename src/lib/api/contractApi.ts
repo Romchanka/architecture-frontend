@@ -20,6 +20,20 @@ export const contractApi = {
     sign: (id: number) =>
         api.put(`/contracts/${id}/sign`),
 
+    // ── Электронная подпись ──
+
+    sendForSignature: (id: number) =>
+        api.put(`/contracts/${id}/send-for-signature`),
+
+    signByCompany: (id: number, companyRepName: string, signatureBlob: Blob) => {
+        const formData = new FormData()
+        formData.append('companyRepName', companyRepName)
+        formData.append('signature', signatureBlob, 'signature.png')
+        return api.put(`/contracts/${id}/sign-company`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+    },
+
     confirmPayment: (id: number) =>
         api.put(`/contracts/${id}/confirm-payment`),
 

@@ -19,6 +19,7 @@ import ParkingPage from './pages/admin/ParkingPage'
 import TransactionsPage from './pages/admin/TransactionsPage'
 import EmployeesPage from './pages/admin/EmployeesPage'
 import ReportsPage from './pages/admin/ReportsPage'
+import InstallmentsPage from './pages/admin/InstallmentsPage'
 
 function App() {
     return (
@@ -52,6 +53,7 @@ function App() {
                 <Route path="transactions" element={<RoleRoute path="/admin/transactions"><TransactionsPage /></RoleRoute>} />
                 <Route path="employees" element={<RoleRoute path="/admin/employees"><EmployeesPage /></RoleRoute>} />
                 <Route path="reports" element={<RoleRoute path="/admin/reports"><ReportsPage /></RoleRoute>} />
+                <Route path="installments" element={<RoleRoute path="/admin/installments"><InstallmentsPage /></RoleRoute>} />
             </Route>
         </Routes>
     )

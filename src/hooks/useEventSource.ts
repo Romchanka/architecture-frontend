@@ -14,15 +14,25 @@ interface UseEventSourceOptions {
     autoReconnect?: boolean
 }
 
+/** Check if JWT token is expired by decoding its payload */
+function isTokenExpired(token: string): boolean {
+    try {
+        const parts = token.split('.')
+        if (parts.length !== 3) return true
+        const payload = JSON.parse(atob(parts[1]))
+        if (!payload.exp) return false
+        // Add 30s buffer to avoid edge cases
+        return Date.now() >= (payload.exp * 1000) - 30000
+    } catch {
+        return true
+    }
+}
+
 /**
  * Hook to subscribe to SSE events from the backend.
  * Automatically connects with JWT auth, reconnects on failure.
- *
- * @example
- * useEventSource({
- *   eventTypes: ['booking_created', 'booking_updated'],
- *   onEvent: (e) => { console.log(e.type, e.data); reload() }
- * })
+ * Ensures only ONE connection per component instance.
+ * Stops reconnecting if JWT token is expired.
  */
 export function useEventSource(options: UseEventSourceOptions) {
     const { onEvent, eventTypes, autoReconnect = true } = options
@@ -31,12 +41,37 @@ export function useEventSource(options: UseEventSourceOptions) {
 
     const reconnectTimeout = useRef<ReturnType<typeof setTimeout>>()
     const eventSourceRef = useRef<EventSource | null>(null)
+    const isConnecting = useRef(false)
+    const retryCount = useRef(0)
+    const MAX_RETRIES = 30 // Stop after ~5 minutes of failures
 
     const connect = useCallback(() => {
-        // SSE doesn't support custom headers natively.
-        // We pass the token as a query param, which the backend should also accept.
+        // Prevent duplicate connections
+        if (isConnecting.current) return
+        if (eventSourceRef.current?.readyState === EventSource.OPEN) return
+
         const token = localStorage.getItem('token')
         if (!token) return
+
+        // Don't connect if token is expired
+        if (isTokenExpired(token)) {
+            console.warn('[SSE] JWT token expired, not connecting. Please re-login.')
+            return
+        }
+
+        // Stop after too many retries
+        if (retryCount.current >= MAX_RETRIES) {
+            console.warn('[SSE] Max retries reached, stopping reconnection.')
+            return
+        }
+
+        // Close any existing connection first
+        if (eventSourceRef.current) {
+            eventSourceRef.current.close()
+            eventSourceRef.current = null
+        }
+
+        isConnecting.current = true
 
         const url = `/api/events/subscribe?token=${encodeURIComponent(token)}`
         const es = new EventSource(url)
@@ -57,13 +92,28 @@ export function useEventSource(options: UseEventSourceOptions) {
 
         es.addEventListener('connected', () => {
             console.log('[SSE] Connected')
+            isConnecting.current = false
+            retryCount.current = 0 // Reset retries on successful connection
         })
 
         es.onerror = () => {
-            console.warn('[SSE] Connection lost, will reconnect...')
             es.close()
-            if (autoReconnect) {
-                reconnectTimeout.current = setTimeout(connect, 5000)
+            eventSourceRef.current = null
+            isConnecting.current = false
+
+            // Check if token expired before scheduling reconnect
+            const currentToken = localStorage.getItem('token')
+            if (!currentToken || isTokenExpired(currentToken)) {
+                console.warn('[SSE] JWT expired, stopping reconnection.')
+                return
+            }
+
+            if (autoReconnect && retryCount.current < MAX_RETRIES) {
+                retryCount.current++
+                // Exponential backoff: 10s, 20s, 30s... max 60s
+                const delay = Math.min(10000 * retryCount.current, 60000)
+                console.warn(`[SSE] Connection lost, retry ${retryCount.current}/${MAX_RETRIES} in ${delay / 1000}s...`)
+                reconnectTimeout.current = setTimeout(connect, delay)
             }
         }
     }, [eventTypes, autoReconnect])
@@ -71,8 +121,13 @@ export function useEventSource(options: UseEventSourceOptions) {
     useEffect(() => {
         connect()
         return () => {
-            eventSourceRef.current?.close()
             if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current)
+            if (eventSourceRef.current) {
+                eventSourceRef.current.close()
+                eventSourceRef.current = null
+            }
+            isConnecting.current = false
+            retryCount.current = 0
         }
     }, [connect])
 }

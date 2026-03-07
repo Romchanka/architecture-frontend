@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import api from '@/lib/api'
 import { ROLE_LABELS, EmployeeRole } from '@/types/admin'
+import { useAdmin } from '@/components/AdminGuard'
 import { useApiData } from '@/hooks/useApiData'
 import { useApiAction } from '@/hooks/useApiAction'
 import {
@@ -28,7 +29,8 @@ const ROLE_BADGE: Record<string, { label: string; cls: string }> = Object.fromEn
 )
 
 export default function EmployeesPage() {
-    const { data: employees, loading, reload } = useApiData<EmployeeRow[]>('/employees?size=200', [])
+    const employee = useAdmin()
+    const { data: employees, loading, reload } = useApiData<EmployeeRow[]>(`/employees/company/${employee.companyId}`, [])
     const [exec, createState] = useApiAction()
 
     const [roleFilter, setRoleFilter] = useState('')

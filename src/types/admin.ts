@@ -56,11 +56,13 @@ export interface ContractResponse {
     parkingPrice: number
     discount: number
     totalPrice: number
-    status: 'DRAFT' | 'PENDING_SIGNATURE' | 'SIGNED' | 'IN_PAYMENT' | 'PAID' | 'CANCELLED' | 'COMPLETED'
+    status: 'DRAFT' | 'PENDING_BUYER_SIGNATURE' | 'PENDING_COMPANY_SIGNATURE' | 'SIGNED' | 'IN_PAYMENT' | 'PAID' | 'CANCELLED' | 'COMPLETED'
     signedDate: string | null
     documentUrl: string | null
     createdAt: string
     updatedAt: string
+    buyerSignatureUrl: string | null
+    companySignatureUrl: string | null
 }
 
 export interface TransactionResponse {
@@ -115,6 +117,7 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
     ACCOUNTANT: [
         { label: 'Дашборд', path: '/admin', icon: '📊' },
         { label: 'Платежи', path: '/admin/transactions', icon: '💰' },
+        { label: 'Рассрочки', path: '/admin/installments', icon: '📅' },
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
         { label: 'Отчёты', path: '/admin/reports', icon: '📈' },
     ],
@@ -125,6 +128,7 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
         { label: 'Парковки', path: '/admin/parking', icon: '🅿️' },
         { label: 'Платежи', path: '/admin/transactions', icon: '💰' },
+        { label: 'Рассрочки', path: '/admin/installments', icon: '📅' },
         { label: 'Сотрудники', path: '/admin/employees', icon: '👥' },
         { label: 'Отчёты', path: '/admin/reports', icon: '📈' },
     ],
@@ -135,6 +139,7 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
         { label: 'Парковки', path: '/admin/parking', icon: '🅿️' },
         { label: 'Платежи', path: '/admin/transactions', icon: '💰' },
+        { label: 'Рассрочки', path: '/admin/installments', icon: '📅' },
         { label: 'Сотрудники', path: '/admin/employees', icon: '👥' },
         { label: 'Отчёты', path: '/admin/reports', icon: '📈' },
     ],

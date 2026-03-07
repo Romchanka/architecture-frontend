@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
     const [searchParams] = useSearchParams()
     const resetToken = searchParams.get('token')
 
-    const [step, setStep] = useState<'email' | 'reset'>(resetToken ? 'reset' : 'email')
+    const [step] = useState<'email' | 'reset'>(resetToken ? 'reset' : 'email')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
