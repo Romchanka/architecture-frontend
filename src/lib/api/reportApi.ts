@@ -5,7 +5,7 @@ export const reportApi = {
         api.get('/reports/company-statistics'),
 
     consultantPerformance: () =>
-        api.get('/reports/consultant-performance'),
+        api.get('/reports/consultants-performance'),
 
     financial: () =>
         api.get('/reports/financial'),

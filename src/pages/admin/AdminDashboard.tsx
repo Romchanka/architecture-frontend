@@ -85,32 +85,47 @@ export default function AdminDashboard() {
     const getStatCards = (): StatCard[] => {
         if (!stats) return []
 
+        // Маппинг из реальной структуры API
+        const apt = stats.apartmentsByStatus || {}
+        const bk = stats.bookingsByStatus || {}
+        const ct = stats.contractsByStatus || {}
+
+        const totalApartments = Object.values(apt).reduce((s: number, v: any) => s + (typeof v === 'number' ? v : 0), 0)
+        const availableApartments = apt.AVAILABLE ?? 0
+        const bookedApartments = apt.BOOKED ?? 0
+        const soldApartments = apt.SOLD ?? 0
+        const activeBookings = bk.ACTIVE ?? 0
+        const totalContracts = Object.values(ct).reduce((s: number, v: any) => s + (v?.count ?? 0), 0)
+        const paidContracts = ct.PAID?.count ?? 0
+        const totalRevenue = ct.PAID?.totalAmount ?? 0
+        const receivedPayments = stats.totalRevenueLast30Days ?? 0
+
         if (isAccountant) {
             return [
-                { label: 'Общая выручка', value: fmtPrice(stats.totalRevenue ?? 0), icon: '💰', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10 border-emerald-500/20' },
-                { label: 'Получено платежей', value: fmtPrice(stats.receivedPayments ?? 0), icon: '✅', color: 'text-green-400', bgColor: 'bg-green-500/10 border-green-500/20' },
-                { label: 'Всего договоров', value: stats.totalContracts ?? 0, icon: '📄', color: 'text-cyan-400', bgColor: 'bg-cyan-500/10 border-cyan-500/20' },
-                { label: 'Подписано', value: stats.signedContracts ?? 0, icon: '✍️', color: 'text-purple-400', bgColor: 'bg-purple-500/10 border-purple-500/20' },
+                { label: 'Общая выручка', value: fmtPrice(totalRevenue), icon: '💰', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10 border-emerald-500/20' },
+                { label: 'Выручка за 30 дней', value: fmtPrice(receivedPayments), icon: '✅', color: 'text-green-400', bgColor: 'bg-green-500/10 border-green-500/20' },
+                { label: 'Всего договоров', value: totalContracts, icon: '📄', color: 'text-cyan-400', bgColor: 'bg-cyan-500/10 border-cyan-500/20' },
+                { label: 'Оплачено', value: paidContracts, icon: '✍️', color: 'text-purple-400', bgColor: 'bg-purple-500/10 border-purple-500/20' },
             ]
         }
 
         if (isConsultant) {
             return [
-                { label: 'Всего квартир', value: stats.totalApartments ?? 0, icon: '🏠', color: 'text-blue-400', bgColor: 'bg-blue-500/10 border-blue-500/20' },
-                { label: 'Свободно', value: stats.availableApartments ?? 0, icon: '✅', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10 border-emerald-500/20' },
-                { label: 'Забронировано', value: stats.bookedApartments ?? 0, icon: '📋', color: 'text-amber-400', bgColor: 'bg-amber-500/10 border-amber-500/20' },
-                { label: 'Продано', value: stats.soldApartments ?? 0, icon: '💰', color: 'text-purple-400', bgColor: 'bg-purple-500/10 border-purple-500/20' },
+                { label: 'Всего квартир', value: totalApartments, icon: '🏠', color: 'text-blue-400', bgColor: 'bg-blue-500/10 border-blue-500/20' },
+                { label: 'Свободно', value: availableApartments, icon: '✅', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10 border-emerald-500/20' },
+                { label: 'Забронировано', value: bookedApartments, icon: '📋', color: 'text-amber-400', bgColor: 'bg-amber-500/10 border-amber-500/20' },
+                { label: 'Продано', value: soldApartments, icon: '💰', color: 'text-purple-400', bgColor: 'bg-purple-500/10 border-purple-500/20' },
             ]
         }
 
         // ADMIN / SUPER_USER — full stats
         return [
-            { label: 'Всего квартир', value: stats.totalApartments ?? stats.apartmentStats?.total ?? 0, icon: '🏠', color: 'text-blue-400', bgColor: 'bg-blue-500/10 border-blue-500/20' },
-            { label: 'Свободно', value: stats.availableApartments ?? stats.apartmentStats?.available ?? 0, icon: '✅', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10 border-emerald-500/20' },
-            { label: 'Забронировано', value: stats.bookedApartments ?? stats.apartmentStats?.booked ?? 0, icon: '📋', color: 'text-amber-400', bgColor: 'bg-amber-500/10 border-amber-500/20' },
-            { label: 'Продано', value: stats.soldApartments ?? stats.apartmentStats?.sold ?? 0, icon: '💰', color: 'text-purple-400', bgColor: 'bg-purple-500/10 border-purple-500/20' },
-            { label: 'Активных бронирований', value: stats.activeBookings ?? stats.bookingStats?.active ?? 0, icon: '🔥', color: 'text-orange-400', bgColor: 'bg-orange-500/10 border-orange-500/20' },
-            { label: 'Договоров', value: stats.totalContracts ?? stats.contractStats?.total ?? 0, icon: '📄', color: 'text-cyan-400', bgColor: 'bg-cyan-500/10 border-cyan-500/20' },
+            { label: 'Всего квартир', value: totalApartments, icon: '🏠', color: 'text-blue-400', bgColor: 'bg-blue-500/10 border-blue-500/20' },
+            { label: 'Свободно', value: availableApartments, icon: '✅', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10 border-emerald-500/20' },
+            { label: 'Забронировано', value: bookedApartments, icon: '📋', color: 'text-amber-400', bgColor: 'bg-amber-500/10 border-amber-500/20' },
+            { label: 'Продано', value: soldApartments, icon: '💰', color: 'text-purple-400', bgColor: 'bg-purple-500/10 border-purple-500/20' },
+            { label: 'Активных бронирований', value: activeBookings, icon: '🔥', color: 'text-orange-400', bgColor: 'bg-orange-500/10 border-orange-500/20' },
+            { label: 'Договоров', value: totalContracts, icon: '📄', color: 'text-cyan-400', bgColor: 'bg-cyan-500/10 border-cyan-500/20' },
         ]
     }
 

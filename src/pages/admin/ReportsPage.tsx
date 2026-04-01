@@ -85,21 +85,29 @@ export default function ReportsPage() {
             </div>
 
             {/* Overview Tab */}
-            {activeTab === 'overview' && companyStats && (
-                <div className="space-y-6">
-                    <StatGrid cards={[
-                        { label: 'Всего квартир', value: companyStats.totalApartments ?? companyStats.apartmentStats?.total, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-                        { label: 'Свободно', value: companyStats.availableApartments ?? companyStats.apartmentStats?.available, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-                        { label: 'Забронировано', value: companyStats.bookedApartments ?? companyStats.apartmentStats?.booked, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-                        { label: 'Продано', value: companyStats.soldApartments ?? companyStats.apartmentStats?.sold, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-                    ]} cols="lg:grid-cols-4" />
-                    <StatGrid cards={[
-                        { label: 'Активных бронирований', value: companyStats.activeBookings ?? companyStats.bookingStats?.active, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
-                        { label: 'Договоров', value: companyStats.totalContracts ?? companyStats.contractStats?.total, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
-                        { label: 'Подписанных', value: companyStats.signedContracts ?? companyStats.contractStats?.signed, color: 'text-teal-400', bg: 'bg-teal-500/10 border-teal-500/20' },
-                    ]} cols="lg:grid-cols-3" />
-                </div>
-            )}
+            {activeTab === 'overview' && companyStats && (() => {
+                const apt = companyStats.apartmentsByStatus || {}
+                const bk = companyStats.bookingsByStatus || {}
+                const ct = companyStats.contractsByStatus || {}
+                const totalApt = Object.values(apt).reduce((s: number, v: any) => s + (typeof v === 'number' ? v : 0), 0)
+                const totalContracts = Object.values(ct).reduce((s: number, v: any) => s + (v?.count ?? 0), 0)
+                const signedContracts = (ct.SIGNED?.count ?? 0) + (ct.PAID?.count ?? 0) + (ct.COMPLETED?.count ?? 0)
+                return (
+                    <div className="space-y-6">
+                        <StatGrid cards={[
+                            { label: 'Всего квартир', value: totalApt, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+                            { label: 'Свободно', value: apt.AVAILABLE ?? 0, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+                            { label: 'Забронировано', value: apt.BOOKED ?? 0, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+                            { label: 'Продано', value: apt.SOLD ?? 0, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+                        ]} cols="lg:grid-cols-4" />
+                        <StatGrid cards={[
+                            { label: 'Активных бронирований', value: bk.ACTIVE ?? 0, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+                            { label: 'Договоров', value: totalContracts, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
+                            { label: 'Подписанных', value: signedContracts, color: 'text-teal-400', bg: 'bg-teal-500/10 border-teal-500/20' },
+                        ]} cols="lg:grid-cols-3" />
+                    </div>
+                )
+            })()}
 
             {/* Consultants Tab */}
             {activeTab === 'consultants' && (
@@ -115,10 +123,10 @@ export default function ReportsPage() {
             {activeTab === 'finance' && (
                 financials ? (
                     <StatGrid cards={[
-                        { label: 'Общая выручка', value: fmtPrice(financials.totalRevenue ?? 0) + ' сом', color: 'text-emerald-400', bg: 'bg-gray-900 border-emerald-500/20' },
-                        { label: 'Ожидаемые платежи', value: fmtPrice(financials.expectedPayments ?? 0) + ' сом', color: 'text-yellow-400', bg: 'bg-gray-900 border-yellow-500/20' },
-                        { label: 'Получено', value: fmtPrice(financials.receivedPayments ?? 0) + ' сом', color: 'text-blue-400', bg: 'bg-gray-900 border-blue-500/20' },
-                        { label: 'Просрочено', value: fmtPrice(financials.overduePayments ?? 0) + ' сом', color: 'text-red-400', bg: 'bg-gray-900 border-red-500/20' },
+                        { label: 'Общая стоимость договоров', value: fmtPrice(financials.totalContractValue ?? 0) + ' сом', color: 'text-emerald-400', bg: 'bg-gray-900 border-emerald-500/20' },
+                        { label: 'Получено', value: fmtPrice(financials.totalIncome ?? 0) + ' сом', color: 'text-blue-400', bg: 'bg-gray-900 border-blue-500/20' },
+                        { label: 'Завершённых транзакций', value: financials.completedTransactions ?? 0, color: 'text-green-400', bg: 'bg-gray-900 border-green-500/20' },
+                        { label: 'Ожидающих транзакций', value: financials.pendingTransactions ?? 0, color: 'text-yellow-400', bg: 'bg-gray-900 border-yellow-500/20' },
                     ]} cols="lg:grid-cols-2" />
                 ) : (
                     <div className="bg-gray-900 rounded-xl border border-gray-800 p-12 text-center text-gray-600">

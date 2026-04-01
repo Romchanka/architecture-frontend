@@ -84,6 +84,8 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
 
 
     const handleApartmentClick = useCallback((apt: Apartment) => {
+        // Hide details for SOLD and INSTALLMENT apartments
+        if (apt.status === 'SOLD' || apt.status === 'INSTALLMENT') return
         setDetailApartment(apt)
         setBookingStatus('idle')
         setBookingError(null)
@@ -205,19 +207,21 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
                     }}
                 >
                     <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden"
-                        style={{ minWidth: '280px' }}>
-                        {/* Мини-превью планировки */}
-                        <div className="h-36 bg-slate-900 flex items-center justify-center overflow-hidden">
-                            <img
-                                src={LAYOUT_IMAGES[hoveredApartment.rooms] || LAYOUT_IMAGES[1]}
-                                alt="Планировка"
-                                className="h-full w-full object-contain object-top"
-                                style={{
-                                    filter: 'brightness(1.1)',
-                                    objectPosition: 'center 25%',
-                                }}
-                            />
-                        </div>
+                        style={{ minWidth: hoveredApartment.status === 'SOLD' || hoveredApartment.status === 'INSTALLMENT' ? '180px' : '280px' }}>
+                        {/* Мини-превью планировки (hidden for SOLD/INSTALLMENT) */}
+                        {hoveredApartment.status !== 'SOLD' && hoveredApartment.status !== 'INSTALLMENT' && (
+                            <div className="h-36 bg-slate-900 flex items-center justify-center overflow-hidden">
+                                <img
+                                    src={LAYOUT_IMAGES[hoveredApartment.rooms] || LAYOUT_IMAGES[1]}
+                                    alt="Планировка"
+                                    className="h-full w-full object-contain object-top"
+                                    style={{
+                                        filter: 'brightness(1.1)',
+                                        objectPosition: 'center 25%',
+                                    }}
+                                />
+                            </div>
+                        )}
 
                         <div className="p-3">
                             <div className="flex items-center justify-between mb-2">
@@ -235,18 +239,23 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                                <div className="text-slate-400">Комнат</div>
-                                <div className="text-white font-medium">{hoveredApartment.rooms}</div>
-                                <div className="text-slate-400">Площадь</div>
-                                <div className="text-white font-medium">{hoveredApartment.areaTotal} м²</div>
-                                <div className="text-slate-400">Этаж</div>
-                                <div className="text-white font-medium">{hoveredApartment.floor}</div>
-                                <div className="text-slate-400">Цена</div>
-                                <div className="text-amber-400 font-semibold">
-                                    {hoveredApartment.totalPrice?.toLocaleString('ru-RU')} сом
+                            {/* Hide details for SOLD and INSTALLMENT */}
+                            {hoveredApartment.status !== 'SOLD' && hoveredApartment.status !== 'INSTALLMENT' ? (
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                    <div className="text-slate-400">Комнат</div>
+                                    <div className="text-white font-medium">{hoveredApartment.rooms}</div>
+                                    <div className="text-slate-400">Площадь</div>
+                                    <div className="text-white font-medium">{hoveredApartment.areaTotal} м²</div>
+                                    <div className="text-slate-400">Этаж</div>
+                                    <div className="text-white font-medium">{hoveredApartment.floor}</div>
+                                    <div className="text-slate-400">Цена</div>
+                                    <div className="text-amber-400 font-semibold">
+                                        {hoveredApartment.totalPrice?.toLocaleString('ru-RU')} сом
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <p className="text-xs text-slate-500">Информация скрыта</p>
+                            )}
                         </div>
                     </div>
                 </div>
