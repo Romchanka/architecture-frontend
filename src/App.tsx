@@ -15,11 +15,13 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import ApartmentsPage from './pages/admin/ApartmentsPage'
 import BookingsPage from './pages/admin/BookingsPage'
 import ContractsPage from './pages/admin/ContractsPage'
+import StoriesPage from './pages/admin/StoriesPage'
 import ParkingPage from './pages/admin/ParkingPage'
 import TransactionsPage from './pages/admin/TransactionsPage'
 import EmployeesPage from './pages/admin/EmployeesPage'
 import ReportsPage from './pages/admin/ReportsPage'
 import InstallmentsPage from './pages/admin/InstallmentsPage'
+import DocumentCenterPage from './pages/admin/DocumentCenterPage'
 
 function App() {
     return (
@@ -49,11 +51,13 @@ function App() {
                 <Route path="apartments" element={<RoleRoute path="/admin/apartments"><ApartmentsPage /></RoleRoute>} />
                 <Route path="bookings" element={<RoleRoute path="/admin/bookings"><BookingsPage /></RoleRoute>} />
                 <Route path="contracts" element={<RoleRoute path="/admin/contracts"><ContractsPage /></RoleRoute>} />
+                <Route path="stories" element={<RoleRoute path="/admin/stories"><StoriesPage /></RoleRoute>} />
                 <Route path="parking" element={<RoleRoute path="/admin/parking"><ParkingPage /></RoleRoute>} />
                 <Route path="transactions" element={<RoleRoute path="/admin/transactions"><TransactionsPage /></RoleRoute>} />
                 <Route path="employees" element={<RoleRoute path="/admin/employees"><EmployeesPage /></RoleRoute>} />
                 <Route path="reports" element={<RoleRoute path="/admin/reports"><ReportsPage /></RoleRoute>} />
                 <Route path="installments" element={<RoleRoute path="/admin/installments"><InstallmentsPage /></RoleRoute>} />
+                <Route path="documents" element={<RoleRoute path="/admin/documents"><DocumentCenterPage /></RoleRoute>} />
             </Route>
         </Routes>
     )

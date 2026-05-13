@@ -8,7 +8,7 @@ import {
 
 interface BookingRow {
     id: number
-    apartmentNumber: string
+    apartmentNumber: string | null
     userId: number | null
     userName: string | null
     userPhone: string | null

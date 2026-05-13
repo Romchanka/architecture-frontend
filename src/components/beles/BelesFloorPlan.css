@@ -1,0 +1,468 @@
+.beles-floor-plan {
+    width: 100%;
+    min-height: 100vh;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ═══ Header ═══ */
+.beles-header {
+    padding: 20px 28px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.beles-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+.beles-title-row h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.beles-subtitle {
+    font-size: 13px;
+    color: #64748b;
+}
+.beles-stats {
+    display: flex;
+    gap: 24px;
+}
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.stat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.stat-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+.stat-label {
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* ═══ Main Area ═══ */
+.beles-main {
+    display: flex;
+    padding: 16px;
+    gap: 12px;
+    height: calc(100vh - 110px);
+}
+
+/* ═══ Floor Selector ═══ */
+.beles-floor-selector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    background: rgba(30,41,59,0.7);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow-y: auto;
+    min-width: 44px;
+}
+.floor-label {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+.floor-btn {
+    width: 36px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.floor-btn:hover {
+    background: rgba(99,102,241,0.15);
+    color: #e2e8f0;
+}
+.floor-btn.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+}
+
+/* ═══ Plan Container ═══ */
+.beles-plan-container {
+    flex: 1;
+    position: relative;
+    background: rgba(30,41,59,0.5);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+}
+
+/* Transform wrapper — GPU-accelerated zoom/pan */
+.beles-plan-transform {
+    position: relative;
+    width: 100%;
+    will-change: transform;
+}
+
+/* Background image — rasterized into its own compositing layer */
+.beles-plan-bg {
+    display: block;
+    width: 100%;
+    height: auto;
+    will-change: auto;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* SVG polygon overlay — lightweight, positioned on top of background */
+.beles-plan-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.beles-plan-overlay polygon {
+    pointer-events: all;
+}
+
+/* ═══ Zone polygon hover — CSS-driven, no JS re-render ═══ */
+.zone-polygon {
+    /* No transition — instant response, zero repaint cascade */
+}
+.zone-available:hover { fill: rgba(34,197,94,0.48) !important; stroke: #22c55e !important; stroke-width: 2px; }
+.zone-prebooked:hover { fill: rgba(245,158,11,0.50) !important; stroke: #f59e0b !important; stroke-width: 2px; }
+.zone-booked:hover { fill: rgba(245,158,11,0.50) !important; stroke: #f59e0b !important; stroke-width: 2px; }
+.zone-installment:hover { fill: rgba(168,85,247,0.50) !important; stroke: #a855f7 !important; stroke-width: 2px; }
+.zone-sold:hover { fill: rgba(239,68,68,0.50) !important; stroke: #ef4444 !important; stroke-width: 2px; }
+
+/* ═══ Zoom Controls ═══ */
+.beles-zoom-controls {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(15,23,42,0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 4px 6px;
+}
+.zoom-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(99,102,241,0.15);
+    color: #c7d2fe;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+.zoom-btn:hover {
+    background: rgba(99,102,241,0.35);
+    color: #fff;
+}
+.zoom-btn.zoom-reset {
+    font-size: 16px;
+    margin-left: 2px;
+}
+.zoom-level {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* ═══ Tooltip ═══ */
+.beles-tooltip {
+    position: fixed;
+    z-index: 100;
+    background: rgba(15,23,42,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px 16px;
+    min-width: 200px;
+    pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.tooltip-apt {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+.tooltip-status {
+    font-size: 12px;
+    font-weight: 600;
+}
+.tooltip-body > div {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 13px;
+}
+.tooltip-body > div > span:first-child {
+    color: #64748b;
+}
+.tooltip-body > div > span:last-child {
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+/* ═══ Modal ═══ */
+.beles-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.beles-modal {
+    background: #1e293b;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 28px;
+    min-width: 320px;
+    max-width: 420px;
+    position: relative;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+}
+.modal-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 18px;
+    cursor: pointer;
+}
+.beles-modal h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    color: #f1f5f9;
+}
+.modal-info > div {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.modal-info > div > span:first-child {
+    color: #64748b;
+}
+.modal-book-btn {
+    margin-top: 20px;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+}
+.modal-book-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(34,197,94,0.4);
+}
+.modal-book-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+}
+
+/* ═══ Parking Toolbar ═══ */
+.beles-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 28px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.level-switcher {
+    display: flex;
+    gap: 8px;
+}
+.level-btn {
+    padding: 8px 20px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.level-btn:hover {
+    background: rgba(99,102,241,0.15);
+    color: #e2e8f0;
+}
+.level-btn.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+}
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.zoom-controls button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(99,102,241,0.15);
+    color: #c7d2fe;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+.zoom-controls button:hover {
+    background: rgba(99,102,241,0.35);
+    color: #fff;
+}
+.zoom-controls span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    min-width: 44px;
+    text-align: center;
+}
+
+/* ═══ Parking Viewport ═══ */
+.beles-viewport {
+    position: relative;
+    overflow: hidden;
+    height: calc(100vh - 200px);
+    min-height: 500px;
+    cursor: grab;
+    background: rgba(30,41,59,0.5);
+}
+.beles-viewport:active {
+    cursor: grabbing;
+}
+.svg-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    will-change: transform;
+}
+.beles-bg-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+}
+.beles-svg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.beles-svg-overlay polygon {
+    pointer-events: all;
+    cursor: pointer;
+    transition: fill 0.1s, stroke 0.1s;
+}
+.zone-group:hover polygon {
+    filter: brightness(1.3);
+}
+.zone-group.highlighted polygon {
+    stroke-width: 4px !important;
+    filter: brightness(1.4);
+}
+.zone-label {
+    fill: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* ═══ Parking Tooltip (BelesParkingPlan) ═══ */
+.beles-tooltip .tooltip-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.beles-tooltip .tooltip-title .font-bold {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+.beles-tooltip .status-badge {
+    font-size: 12px;
+    font-weight: 600;
+}
+.beles-tooltip .tooltip-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 13px;
+}
+.beles-tooltip .detail-row > span:first-child {
+    color: #64748b;
+}
+.beles-tooltip .detail-row > span:last-child,
+.beles-tooltip .font-medium {
+    color: #e2e8f0;
+    font-weight: 500;
+}

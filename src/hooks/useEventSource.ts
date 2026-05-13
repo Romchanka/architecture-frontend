@@ -91,7 +91,7 @@ export function useEventSource(options: UseEventSourceOptions) {
         })
 
         es.addEventListener('connected', () => {
-            console.log('[SSE] Connected')
+            if (import.meta.env.DEV) console.log('[SSE] Connected')
             isConnecting.current = false
             retryCount.current = 0 // Reset retries on successful connection
         })

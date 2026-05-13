@@ -129,8 +129,10 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
         { label: 'Парковки', path: '/admin/parking', icon: '🅿️' },
         { label: 'Платежи', path: '/admin/transactions', icon: '💰' },
         { label: 'Рассрочки', path: '/admin/installments', icon: '📅' },
+        { label: 'Документы', path: '/admin/documents', icon: '📁' },
         { label: 'Сотрудники', path: '/admin/employees', icon: '👥' },
         { label: 'Отчёты', path: '/admin/reports', icon: '📈' },
+        { label: 'Истории', path: '/admin/stories', icon: '📱' },
     ],
     SUPER_USER: [
         { label: 'Дашборд', path: '/admin', icon: '📊' },
@@ -140,8 +142,10 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
         { label: 'Парковки', path: '/admin/parking', icon: '🅿️' },
         { label: 'Платежи', path: '/admin/transactions', icon: '💰' },
         { label: 'Рассрочки', path: '/admin/installments', icon: '📅' },
+        { label: 'Документы', path: '/admin/documents', icon: '📁' },
         { label: 'Сотрудники', path: '/admin/employees', icon: '👥' },
         { label: 'Отчёты', path: '/admin/reports', icon: '📈' },
+        { label: 'Истории', path: '/admin/stories', icon: '📱' },
     ],
 }
 

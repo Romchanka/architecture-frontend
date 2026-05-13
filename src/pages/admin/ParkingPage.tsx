@@ -8,12 +8,12 @@ import {
 
 interface ParkingRow {
     id: number
-    spaceNumber: string
-    floor: number
+    number: string
+    level: string
     area: number
     price: number
     status: string
-    type: string
+    notes: string
     buildingId: number
     contractId: number | null
 }
@@ -30,9 +30,9 @@ export default function ParkingPage() {
     )
 
     const columns: Column<ParkingRow>[] = [
-        { header: 'Номер', render: (s) => <span className="text-sm text-white font-medium">{s.spaceNumber}</span> },
-        { header: 'Этаж', render: (s) => <span className="text-sm text-gray-400">{s.floor}</span> },
-        { header: 'Тип', render: (s) => <span className="text-sm text-gray-400">{s.type || '—'}</span> },
+        { header: 'Номер', render: (s) => <span className="text-sm text-white font-medium">{s.number}</span> },
+        { header: 'Уровень', render: (s) => <span className="text-sm text-gray-400">{s.level || '—'}</span> },
+        { header: 'Заметка', render: (s) => <span className="text-sm text-gray-400">{s.notes || '—'}</span> },
         { header: 'Цена', render: (s) => <span className="text-sm text-amber-400 font-mono font-bold">{fmtPrice(s.price)} сом</span> },
         { header: 'Статус', render: (s) => <StatusBadge status={s.status} colorMap={STATUS_MAP} /> },
         { header: 'Договор', render: (s) => <span className="text-sm text-gray-500">{s.contractId ? `#${s.contractId}` : '—'}</span> },

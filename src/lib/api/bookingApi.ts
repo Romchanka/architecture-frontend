@@ -11,7 +11,9 @@ export const bookingApi = {
         api.get('/bookings/my'),
 
     create: (data: {
-        apartmentId: number
+        targetType: 'APARTMENT' | 'PARKING_SPACE'
+        apartmentId?: number | null
+        parkingSpaceId?: number | null
         userId?: number | null
         bookingType: 'PREBOOKING' | 'BOOKING'
         notes?: string | null

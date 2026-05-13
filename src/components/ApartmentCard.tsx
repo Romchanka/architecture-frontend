@@ -48,16 +48,12 @@ export default function ApartmentCard({ apartment }: ApartmentCardProps) {
     }
 
     const handleBooking = () => {
-        // Check if user is authenticated
         const token = localStorage.getItem('token')
-
         if (!token) {
-            // Redirect to login page with return URL
             navigate('/login', { state: { from: '/marketplace', apartmentId: apartment.id } })
         } else {
-            // TODO: Open booking modal or navigate to booking page
-            // For now, just show an alert
-            alert(`Бронирование квартиры №${apartment.apartmentNumber}. Функция в разработке.`)
+            // Navigate to the marketplace page with this apartment pre-selected
+            navigate('/marketplace', { state: { highlightApartmentId: apartment.id } })
         }
     }
 

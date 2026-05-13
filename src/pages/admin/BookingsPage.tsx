@@ -17,8 +17,11 @@ import ContractCreateModal from '@/components/admin/ContractCreateModal'
 
 interface BookingRow {
     id: number
-    apartmentId: number
-    apartmentNumber: string
+    apartmentId: number | null
+    apartmentNumber: string | null
+    parkingSpaceId: number | null
+    parkingSpaceNumber: string | null
+    targetType: 'APARTMENT' | 'PARKING_SPACE'
     userId: number | null
     userName: string | null
     userPhone: string | null
@@ -59,11 +62,14 @@ export default function BookingsPage() {
 
     const [statusFilter, setStatusFilter] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
+    const [targetFilter, setTargetFilter] = useState('')
     const [showCreate, setShowCreate] = useState(!!preselectedApartmentId)
     const [selected, setSelected] = useState<BookingRow | null>(null)
     const [contractBooking, setContractBooking] = useState<BookingRow | null>(null)
     const [createForm, setCreateForm] = useState({
+        targetType: (preselectedApartmentId ? 'APARTMENT' : 'APARTMENT') as 'APARTMENT' | 'PARKING_SPACE',
         apartmentId: preselectedApartmentId || '',
+        parkingSpaceId: '',
         userId: '',
         bookingType: 'PREBOOKING' as 'PREBOOKING' | 'BOOKING',
         notes: '',
@@ -74,14 +80,17 @@ export default function BookingsPage() {
         bookings.filter((b) => {
             if (statusFilter && b.status !== statusFilter) return false
             if (typeFilter && b.bookingType !== typeFilter) return false
+            if (targetFilter && b.targetType !== targetFilter) return false
             return true
         }),
-        [bookings, statusFilter, typeFilter]
+        [bookings, statusFilter, typeFilter, targetFilter]
     )
 
     const handleCreate = () => exec(
         () => bookingApi.create({
-            apartmentId: Number(createForm.apartmentId),
+            targetType: createForm.targetType,
+            apartmentId: createForm.targetType === 'APARTMENT' ? Number(createForm.apartmentId) : null,
+            parkingSpaceId: createForm.targetType === 'PARKING_SPACE' ? Number(createForm.parkingSpaceId) : null,
             userId: createForm.userId ? Number(createForm.userId) : null,
             bookingType: createForm.bookingType,
             notes: createForm.notes || null,
@@ -91,7 +100,7 @@ export default function BookingsPage() {
             errorFallback: 'Ошибка создания бронирования',
             onSuccess: () => {
                 setShowCreate(false)
-                setCreateForm({ apartmentId: '', userId: '', bookingType: 'PREBOOKING', notes: '', durationDays: '7' })
+                setCreateForm({ targetType: 'APARTMENT', apartmentId: '', parkingSpaceId: '', userId: '', bookingType: 'PREBOOKING', notes: '', durationDays: '7' })
                 reload()
             },
         }
@@ -99,7 +108,7 @@ export default function BookingsPage() {
 
     const columns: Column<BookingRow>[] = [
         { header: 'ID', render: (b) => <span className="text-sm text-gray-400">#{b.id}</span> },
-        { header: 'Квартира', render: (b) => <span className="text-sm text-white font-medium">№{b.apartmentNumber}</span> },
+        { header: 'Объект', render: (b) => <span className="text-sm text-white font-medium">{b.targetType === 'PARKING_SPACE' ? `Паркинг №${b.parkingSpaceNumber}` : `Кв. №${b.apartmentNumber}`}</span> },
         { header: 'Покупатель', render: (b) => <span className="text-sm text-gray-400">{b.userName || '—'}</span> },
         { header: 'Консультант', render: (b) => <span className="text-sm text-gray-400">{b.consultantName || '—'}</span> },
         {
@@ -158,6 +167,11 @@ export default function BookingsPage() {
                     <option value="PREBOOKING">Предбронь</option>
                     <option value="BOOKING">Бронь</option>
                 </select>
+                <select value={targetFilter} onChange={(e) => setTargetFilter(e.target.value)} className={filterSelectCls}>
+                    <option value="">Все объекты</option>
+                    <option value="APARTMENT">Квартиры</option>
+                    <option value="PARKING_SPACE">Паркинги</option>
+                </select>
             </FilterBar>
 
             <AdminTable columns={columns} data={filtered} loading={loading} rowKey={(b) => b.id} emptyText="Бронирований не найдено" onRowClick={setSelected} />
@@ -181,9 +195,21 @@ export default function BookingsPage() {
             <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Новое бронирование">
                 <ModalBody>
                     <ModalError message={createState.error} />
-                    <FormField label="ID квартиры *">
-                        <input type="number" value={createForm.apartmentId} onChange={(e) => set('apartmentId', e.target.value)} className={inputCls} placeholder="ID квартиры" />
+                    <FormField label="Тип объекта">
+                        <select value={createForm.targetType} onChange={(e) => set('targetType', e.target.value)} className={inputCls}>
+                            <option value="APARTMENT">Квартира</option>
+                            <option value="PARKING_SPACE">Парковочное место</option>
+                        </select>
                     </FormField>
+                    {createForm.targetType === 'APARTMENT' ? (
+                        <FormField label="ID квартиры *">
+                            <input type="number" value={createForm.apartmentId} onChange={(e) => set('apartmentId', e.target.value)} className={inputCls} placeholder="ID квартиры" />
+                        </FormField>
+                    ) : (
+                        <FormField label="ID парковочного места *">
+                            <input type="number" value={createForm.parkingSpaceId} onChange={(e) => set('parkingSpaceId', e.target.value)} className={inputCls} placeholder="ID парковочного места" />
+                        </FormField>
+                    )}
                     <FormField label="ID покупателя (опционально)">
                         <input type="number" value={createForm.userId} onChange={(e) => set('userId', e.target.value)} className={inputCls} placeholder="ID покупателя" />
                     </FormField>
@@ -201,7 +227,7 @@ export default function BookingsPage() {
                     </FormField>
                 </ModalBody>
                 <ModalFooter>
-                    <SubmitButton onClick={handleCreate} disabled={!createForm.apartmentId} loading={createState.loading} label="Создать бронирование" loadingLabel="Создание..." />
+                    <SubmitButton onClick={handleCreate} disabled={createForm.targetType === 'APARTMENT' ? !createForm.apartmentId : !createForm.parkingSpaceId} loading={createState.loading} label="Создать бронирование" loadingLabel="Создание..." />
                 </ModalFooter>
             </Modal>
         </div>

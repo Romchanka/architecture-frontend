@@ -5,7 +5,6 @@ import { useApiData } from '@/hooks/useApiData'
 import { useApiAction } from '@/hooks/useApiAction'
 import {
     AdminTable, Column, PageHeader, FilterBar, StatusBadge,
-    Modal, ModalBody, ModalFooter, SubmitButton, ModalError,
     filterSelectCls,
 } from '@/components/admin'
 
@@ -22,15 +21,15 @@ interface ContractRow {
     consultantName?: string
 }
 
-const CONTRACT_STATUS_MAP: Record<string, { label: string; color: string }> = {
-    DRAFT: { label: 'Черновик', color: 'bg-gray-500/15 text-gray-400' },
-    PENDING_BUYER_SIGNATURE: { label: 'Ждёт подпись покупателя', color: 'bg-yellow-500/15 text-yellow-400' },
-    PENDING_COMPANY_SIGNATURE: { label: 'Ждёт подпись компании', color: 'bg-orange-500/15 text-orange-400' },
-    SIGNED: { label: 'Подписан', color: 'bg-blue-500/15 text-blue-400' },
-    IN_PAYMENT: { label: 'Ожидает оплаты', color: 'bg-amber-500/15 text-amber-400' },
-    PAID: { label: 'Оплачен', color: 'bg-emerald-500/15 text-emerald-400' },
-    COMPLETED: { label: 'Завершён', color: 'bg-green-500/15 text-green-400' },
-    CANCELLED: { label: 'Отменён', color: 'bg-red-500/15 text-red-400' },
+const CONTRACT_STATUS_MAP: Record<string, { label: string; cls: string }> = {
+    DRAFT: { label: 'Черновик', cls: 'bg-gray-500/15 text-gray-400' },
+    PENDING_BUYER_SIGNATURE: { label: 'Ждёт подпись покупателя', cls: 'bg-yellow-500/15 text-yellow-400' },
+    PENDING_COMPANY_SIGNATURE: { label: 'Ждёт подпись компании', cls: 'bg-orange-500/15 text-orange-400' },
+    SIGNED: { label: 'Подписан', cls: 'bg-blue-500/15 text-blue-400' },
+    IN_PAYMENT: { label: 'Ожидает оплаты', cls: 'bg-amber-500/15 text-amber-400' },
+    PAID: { label: 'Оплачен', cls: 'bg-emerald-500/15 text-emerald-400' },
+    COMPLETED: { label: 'Завершён', cls: 'bg-green-500/15 text-green-400' },
+    CANCELLED: { label: 'Отменён', cls: 'bg-red-500/15 text-red-400' },
 }
 
 /* ─── Component ─── */
@@ -38,7 +37,7 @@ export default function TransactionsPage() {
     const { data: allContracts, loading, reload } = useApiData<ContractRow[]>(
         '/contracts?size=500&sort=createdAt,desc', []
     )
-    const [exec, actionState] = useApiAction()
+    const [exec, _actionState] = useApiAction()
 
     const [statusFilter, setStatusFilter] = useState('')
     const [confirmingId, setConfirmingId] = useState<number | null>(null)

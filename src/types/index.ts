@@ -20,7 +20,7 @@ export interface Apartment {
     areaKitchen?: number
     pricePerSqm: number
     totalPrice: number
-    status: 'AVAILABLE' | 'PREBOOKED' | 'BOOKED' | 'SOLD'
+    status: 'AVAILABLE' | 'PREBOOKED' | 'BOOKED' | 'SOLD' | 'INSTALLMENT'
     layoutPlanUrl?: string
     apartmentData?: string
     notes?: string

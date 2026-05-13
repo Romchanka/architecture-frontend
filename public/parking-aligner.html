@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Parking Geometry Aligner</title>
+    <style>
+        body { margin: 0; background: #111; color: #fff; font-family: system-ui; }
+        .plan { position: relative; display: none; }
+        .plan.active { display: block; }
+        .zone {
+            position: absolute; border: 2px solid lime; background: rgba(0, 255, 0, 0.12);
+            font-size: 9px; display: flex; align-items: center; justify-content: center;
+            cursor: grab; z-index: 9;
+        }
+        .zone:active { cursor: grabbing; }
+        .zone:hover { background: rgba(0, 255, 0, 0.4); border-color: magenta; z-index: 10; }
+        .zone.selected { border-color: yellow; z-index: 11; background: rgba(255, 255, 0, 0.3); }
+        .zone.new-zone { border-color: #00bfff; background: rgba(0, 191, 255, 0.15); }
+        .zone span { background: rgba(0, 0, 0, 0.7); padding: 1px 3px; border-radius: 2px; pointer-events: none; white-space: nowrap; }
+        .resize-handle {
+            position: absolute; right: -4px; bottom: -4px; width: 10px; height: 10px;
+            background: yellow; cursor: nwse-resize; border-radius: 2px; z-index: 20;
+        }
+        #toolbar {
+            position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.85);
+            padding: 15px; border-radius: 8px; z-index: 999; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            width: 300px; max-height: 95vh; overflow-y: auto;
+        }
+        #toolbar button { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin: 2px; }
+        .active-btn { background: #6366f1 !important; color: #fff !important; }
+        .btn-row { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+        .danger-btn { background: #dc2626; color: #fff; }
+        .json-btn { background: #0ea5e9; color: #fff; }
+        .sql-btn { background: #f59e0b; color: #000; }
+        .import-btn { background: #22c55e; color: #fff; }
+        .load-btn { background: #8b5cf6; color: #fff; }
+        textarea { width: 100%; height: 120px; background: #1e1e1e; color: #0f0; border: 1px solid #333;
+            border-radius: 4px; font-family: monospace; font-size: 10px; padding: 8px; box-sizing: border-box; resize: vertical; }
+        .stats { margin-top: 8px; font-size: 12px; color: #aaa; }
+        .draw-indicator { position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+            background: #dc2626; color: #fff; padding: 8px 20px; border-radius: 20px; font-weight: bold;
+            z-index: 9999; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="draw-indicator" id="drawIndicator">✏️ DRAW MODE — click & drag to create zone</div>
+
+<div id="toolbar">
+    <div>
+        <button id="btnP1" class="active-btn" onclick="switchLevel('p1','btnP1')">-1 Этаж (L1)</button>
+        <button id="btnP2" onclick="switchLevel('p2','btnP2')">-2 Этаж (L2)</button>
+    </div>
+    <div class="btn-row">
+        <button class="load-btn" onclick="loadFromFile()">📥 Load from DB</button>
+        <button id="btnDraw" onclick="toggleDrawMode()">✏️ Draw New</button>
+        <button class="danger-btn" onclick="deleteSelected()">🗑️ Delete</button>
+        <button onclick="duplicateSelected()">📋 Clone</button>
+        <button onclick="clearAllZones()">🧹 Clear All</button>
+    </div>
+    <div class="btn-row">
+        <button class="json-btn" onclick="exportToDBJson()">Export DB JSON</button>
+        <button class="sql-btn" onclick="exportToSQL()">Export SQL</button>
+        <button class="import-btn" onclick="importFromJson()">Import JSON</button>
+    </div>
+    <textarea id="output" placeholder="Paste DB JSON here to import, or use export buttons..."></textarea>
+    <div class="stats" id="stats">Zones: 0</div>
+    <div style="margin-top:10px; font-size:11px; color:#aaa;">
+        <b>Controls:</b><br/>
+        - <b>📥 Load from DB</b>: load L1/L2 from /parking_l1.json, /parking_l2.json<br/>
+        - <b>✏️ Draw New</b>: click & drag on plan to create zones.<br/>
+        - <b>🗑️ Delete</b> or DEL key: remove selected.<br/>
+        - <b>📋 Clone</b> or Ctrl+D: duplicate selected.<br/>
+        - Drag boxes to align. SHIFT+Click multi-select.<br/>
+        - Double-click to edit label. Arrow keys nudge (SHIFT=5px).<br/>
+        - Export DB JSON → paste into Import on other level.
+    </div>
+</div>
+
+<div class="plan active" id="p1" style="width:2872.4402px;height:1549.5999px">
+    <img src="/parking-plan-2.webp" style="width:2872.4402px;height:1549.5999px; pointer-events:none;">
+</div>
+
+<div class="plan" id="p2" style="width:2872.4402px;height:1549.5999px">
+    <img src="/parking-plan.webp" style="width:2872.4402px;height:1549.5999px; pointer-events:none;">
+</div>
+
+<script>
+    let currentLevel = 'p1';
+    let selectedElements = [];
+    let isDragging = false;
+    let dragStartCoords = { x: 0, y: 0 };
+    let initialElementCoords = [];
+    let drawMode = false;
+    let isDrawing = false;
+    let drawStart = { x: 0, y: 0 };
+    let drawPreview = null;
+    let nextId = { p1: 200, p2: 200 };
+
+    function switchLevel(lvlId, btnId) {
+        document.querySelectorAll('.plan').forEach(p => p.classList.remove('active'));
+        document.getElementById(lvlId).classList.add('active');
+        document.querySelectorAll('#toolbar > div:first-of-type button').forEach(b => b.classList.remove('active-btn'));
+        document.getElementById(btnId).classList.add('active-btn');
+        currentLevel = lvlId;
+        selectedElements.forEach(el => el.classList.remove('selected'));
+        selectedElements = [];
+        updateStats();
+    }
+
+    // Convert points string "x1,y1 x2,y2 x3,y3 x4,y4" to bounding box {left, top, width, height}
+    function pointsToBBox(pointsStr) {
+        const pts = pointsStr.split(/\s+/).map(p => {
+            const [x, y] = p.split(',').map(Number);
+            return { x, y };
+        });
+        const xs = pts.map(p => p.x);
+        const ys = pts.map(p => p.y);
+        const minX = Math.min(...xs), maxX = Math.max(...xs);
+        const minY = Math.min(...ys), maxY = Math.max(...ys);
+        return { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
+    }
+
+    // Convert bounding box back to points string
+    function bboxToPoints(left, top, width, height) {
+        const x1 = left, y1 = top;
+        const x2 = left + width, y2 = top;
+        const x3 = left + width, y3 = top + height;
+        const x4 = left, y4 = top + height;
+        return `${x1},${y1} ${x2},${y2} ${x3},${y3} ${x4},${y4}`;
+    }
+
+    function loadZonesFromData(containerId, zones) {
+        const container = document.getElementById(containerId);
+        // Clear existing
+        container.querySelectorAll('.zone').forEach(z => z.remove());
+        
+        let maxId = 0;
+        zones.forEach(z => {
+            const bbox = pointsToBBox(z.points);
+            addZoneElement(container, z.label || z.id, bbox.left, bbox.top, bbox.width, bbox.height);
+            const numMatch = String(z.label || z.id).match(/\d+$/);
+            if (numMatch) maxId = Math.max(maxId, parseInt(numMatch[0]));
+        });
+        nextId[containerId] = maxId + 1;
+        updateStats();
+    }
+
+    async function loadFromFile() {
+        try {
+            const [r1, r2] = await Promise.all([
+                fetch('/parking_l1.json?t=' + Date.now()),
+                fetch('/parking_l2.json?t=' + Date.now())
+            ]);
+            const l1 = await r1.json();
+            const l2 = await r2.json();
+            loadZonesFromData('p1', l1.zones);
+            loadZonesFromData('p2', l2.zones);
+            alert(`✅ Loaded!\nL1: ${l1.zones.length} zones\nL2: ${l2.zones.length} zones`);
+        } catch(e) {
+            alert('❌ Error loading: ' + e.message + '\nMake sure /parking_l1.json and /parking_l2.json exist.');
+        }
+    }
+
+    function addZoneElement(container, label, left, top, width, height) {
+        const div = document.createElement('div');
+        div.className = 'zone';
+        div.style.left = left + 'px';
+        div.style.top = top + 'px';
+        div.style.width = width + 'px';
+        div.style.height = height + 'px';
+        div.title = label;
+        div.dataset.label = label;
+        
+        const span = document.createElement('span');
+        span.textContent = label;
+        div.appendChild(span);
+
+        // Resize handle
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle';
+        handle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const startW = parseFloat(div.style.width);
+            const startH = parseFloat(div.style.height);
+            const onMove = (ev) => {
+                div.style.width = Math.max(15, startW + ev.clientX - startX) + 'px';
+                div.style.height = Math.max(15, startH + ev.clientY - startY) + 'px';
+            };
+            const onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                updateStats();
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+        div.appendChild(handle);
+
+        // Double-click to edit label
+        div.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            const newLabel = prompt('Enter new label:', div.dataset.label);
+            if (newLabel !== null && newLabel.trim()) {
+                div.dataset.label = newLabel.trim();
+                div.querySelector('span').textContent = newLabel.trim();
+                div.title = newLabel.trim();
+            }
+        });
+
+        setupDragEvents(div);
+        container.appendChild(div);
+        return div;
+    }
+
+    function setupDragEvents(el) {
+        el.addEventListener('mousedown', function(e) {
+            if (drawMode) return;
+            if (e.shiftKey) {
+                if (selectedElements.includes(el)) {
+                    el.classList.remove('selected');
+                    selectedElements = selectedElements.filter(x => x !== el);
+                } else {
+                    el.classList.add('selected');
+                    selectedElements.push(el);
+                }
+            } else {
+                if (!selectedElements.includes(el)) {
+                    selectedElements.forEach(x => x.classList.remove('selected'));
+                    el.classList.add('selected');
+                    selectedElements = [el];
+                }
+            }
+
+            isDragging = true;
+            dragStartCoords = { x: e.clientX, y: e.clientY };
+            initialElementCoords = selectedElements.map(x => ({
+                el: x,
+                left: parseFloat(x.style.left),
+                top: parseFloat(x.style.top)
+            }));
+            e.preventDefault();
+            e.stopPropagation();
+            updateStats();
+        });
+    }
+
+    document.addEventListener('mousemove', function(e) {
+        if (isDragging && !drawMode) {
+            const dx = e.clientX - dragStartCoords.x;
+            const dy = e.clientY - dragStartCoords.y;
+            initialElementCoords.forEach(item => {
+                item.el.style.left = (item.left + dx) + 'px';
+                item.el.style.top = (item.top + dy) + 'px';
+            });
+        }
+        if (isDrawing && drawPreview) {
+            const container = document.getElementById(currentLevel);
+            const rect = container.getBoundingClientRect();
+            const cx = e.clientX - rect.left;
+            const cy = e.clientY - rect.top;
+            drawPreview.style.left = Math.min(drawStart.x, cx) + 'px';
+            drawPreview.style.top = Math.min(drawStart.y, cy) + 'px';
+            drawPreview.style.width = Math.abs(cx - drawStart.x) + 'px';
+            drawPreview.style.height = Math.abs(cy - drawStart.y) + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (isDragging) { isDragging = false; }
+        if (isDrawing && drawPreview) {
+            const w = parseFloat(drawPreview.style.width);
+            const h = parseFloat(drawPreview.style.height);
+            if (w > 10 && h > 10) {
+                const container = document.getElementById(currentLevel);
+                const prefix = currentLevel === 'p1' ? 'P1-' : 'P2-';
+                const label = prefix + String(nextId[currentLevel]).padStart(3, '0');
+                const el = addZoneElement(
+                    container, label,
+                    parseFloat(drawPreview.style.left),
+                    parseFloat(drawPreview.style.top), w, h
+                );
+                el.classList.add('new-zone');
+                nextId[currentLevel]++;
+            }
+            drawPreview.remove();
+            drawPreview = null;
+            isDrawing = false;
+            updateStats();
+        }
+    });
+
+    // Drawing on plan
+    ['p1', 'p2'].forEach(planId => {
+        document.getElementById(planId).addEventListener('mousedown', function(e) {
+            if (!drawMode || e.target.closest('.zone')) return;
+            const rect = this.getBoundingClientRect();
+            drawStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            isDrawing = true;
+            drawPreview = document.createElement('div');
+            drawPreview.className = 'zone new-zone';
+            drawPreview.style.left = drawStart.x + 'px';
+            drawPreview.style.top = drawStart.y + 'px';
+            drawPreview.style.width = '0px';
+            drawPreview.style.height = '0px';
+            drawPreview.innerHTML = '<span>NEW</span>';
+            this.appendChild(drawPreview);
+        });
+    });
+
+    function toggleDrawMode() {
+        drawMode = !drawMode;
+        document.getElementById('btnDraw').classList.toggle('active-btn', drawMode);
+        document.getElementById('drawIndicator').style.display = drawMode ? 'block' : 'none';
+        document.querySelectorAll('.plan').forEach(p => p.style.cursor = drawMode ? 'crosshair' : '');
+    }
+
+    function deleteSelected() {
+        selectedElements.forEach(el => el.remove());
+        selectedElements = [];
+        updateStats();
+    }
+
+    function duplicateSelected() {
+        const container = document.getElementById(currentLevel);
+        const newSel = [];
+        selectedElements.forEach(el => {
+            const prefix = currentLevel === 'p1' ? 'P1-' : 'P2-';
+            const label = prefix + String(nextId[currentLevel]).padStart(3, '0');
+            const clone = addZoneElement(
+                container, label,
+                parseFloat(el.style.left) + 20,
+                parseFloat(el.style.top) + 20,
+                parseFloat(el.style.width),
+                parseFloat(el.style.height)
+            );
+            clone.classList.add('new-zone', 'selected');
+            nextId[currentLevel]++;
+            newSel.push(clone);
+        });
+        selectedElements.forEach(el => el.classList.remove('selected'));
+        selectedElements = newSel;
+        updateStats();
+    }
+
+    function clearAllZones() {
+        if (!confirm('Clear ALL zones on this level?')) return;
+        const container = document.getElementById(currentLevel);
+        container.querySelectorAll('.zone').forEach(z => z.remove());
+        selectedElements = [];
+        updateStats();
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'Delete') { deleteSelected(); }
+        if (e.key === 'Escape') {
+            selectedElements.forEach(el => el.classList.remove('selected'));
+            selectedElements = [];
+            if (drawMode) toggleDrawMode();
+            updateStats();
+        }
+        if (e.key === 'd' && e.ctrlKey) { e.preventDefault(); duplicateSelected(); }
+        
+        // Arrow keys nudge
+        const step = e.shiftKey ? 5 : 1;
+        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+            selectedElements.forEach(el => {
+                const l = parseFloat(el.style.left);
+                const t = parseFloat(el.style.top);
+                if (e.key === 'ArrowLeft') el.style.left = (l - step) + 'px';
+                if (e.key === 'ArrowRight') el.style.left = (l + step) + 'px';
+                if (e.key === 'ArrowUp') el.style.top = (t - step) + 'px';
+                if (e.key === 'ArrowDown') el.style.top = (t + step) + 'px';
+            });
+        }
+    });
+
+    function getZonesData(containerId) {
+        const container = document.getElementById(containerId);
+        const zones = [];
+        container.querySelectorAll('.zone').forEach(z => {
+            const left = parseFloat(z.style.left);
+            const top = parseFloat(z.style.top);
+            const width = parseFloat(z.style.width);
+            const height = parseFloat(z.style.height);
+            const label = z.dataset.label;
+            const numMatch = label.match(/\d+$/);
+            const id = numMatch ? parseInt(numMatch[0]) : 0;
+            
+            zones.push({
+                id,
+                label,
+                points: bboxToPoints(
+                    Math.round(left * 100) / 100,
+                    Math.round(top * 100) / 100,
+                    Math.round(width * 100) / 100,
+                    Math.round(height * 100) / 100
+                ),
+                labelOffset: {
+                    x: Math.round((left + width / 2) * 100) / 100,
+                    y: Math.round((top + height / 2) * 100) / 100
+                }
+            });
+        });
+        zones.sort((a, b) => a.id - b.id);
+        return zones;
+    }
+
+    function exportToDBJson() {
+        const zones = getZonesData(currentLevel);
+        const data = { zones };
+        const out = JSON.stringify(data, null, 2);
+        document.getElementById('output').value = out;
+        navigator.clipboard?.writeText(out);
+        alert(`✅ DB JSON exported (${zones.length} zones). Copied to clipboard.`);
+    }
+
+    function exportToSQL() {
+        const l1Zones = getZonesData('p1');
+        const l2Zones = getZonesData('p2');
+        const l1Json = JSON.stringify({ zones: l1Zones }).replace(/'/g, "''");
+        const l2Json = JSON.stringify({ zones: l2Zones }).replace(/'/g, "''");
+        const sql = `UPDATE floor_plan_configs SET zones_data = '${l1Json}' WHERE floor_type = 'PARKING_L1';\nUPDATE floor_plan_configs SET zones_data = '${l2Json}' WHERE floor_type = 'PARKING_L2';`;
+        document.getElementById('output').value = sql;
+        navigator.clipboard?.writeText(sql);
+        alert(`✅ SQL exported!\nL1: ${l1Zones.length} zones\nL2: ${l2Zones.length} zones\nCopied to clipboard.`);
+    }
+
+    function importFromJson() {
+        const raw = document.getElementById('output').value.trim();
+        if (!raw) { alert('Paste JSON into textarea first!'); return; }
+        try {
+            const data = JSON.parse(raw);
+            if (data.zones && Array.isArray(data.zones)) {
+                loadZonesFromData(currentLevel, data.zones);
+                alert(`✅ Imported ${data.zones.length} zones into ${currentLevel === 'p1' ? 'L1' : 'L2'}.`);
+            } else {
+                alert('❌ JSON must have a "zones" array.');
+            }
+        } catch(e) {
+            alert('❌ Invalid JSON: ' + e.message);
+        }
+    }
+
+    function updateStats() {
+        const container = document.getElementById(currentLevel);
+        const zones = container.querySelectorAll('.zone');
+        const lvl = currentLevel === 'p1' ? 'L1 (-1)' : 'L2 (-2)';
+        document.getElementById('stats').textContent = 
+            `${lvl} • ${zones.length} zones • ${selectedElements.length} selected`;
+    }
+
+    // Auto-load from files on startup
+    loadFromFile();
+</script>
+</body>
+</html>

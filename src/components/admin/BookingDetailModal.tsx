@@ -10,8 +10,11 @@ import {
 
 interface BookingRow {
     id: number
-    apartmentId: number
-    apartmentNumber: string
+    apartmentId: number | null
+    apartmentNumber: string | null
+    parkingSpaceId: number | null
+    parkingSpaceNumber: string | null
+    targetType: 'APARTMENT' | 'PARKING_SPACE'
     userId: number | null
     userName: string | null
     userPhone: string | null
@@ -69,6 +72,7 @@ export default function BookingDetailModal({ booking, onClose, onBuy, reload }: 
 
     useEffect(() => {
         if (!booking) { setApartmentDetail(null); return }
+        if (!booking.apartmentId) { setApartmentDetail(null); setLoadingApt(false); return }
         setLoadingApt(true)
         apartmentApi.getById(booking.apartmentId)
             .then((res) => setApartmentDetail(res.data))

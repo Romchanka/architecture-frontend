@@ -4,6 +4,8 @@ import api from '@/lib/api'
 import { slugify } from '@/lib/slugify'
 import { Apartment, Building, PagedResponse, Company } from '@/types'
 import FloorPlanView from '@/components/FloorPlanView'
+import BelesFloorPlan from '@/components/beles/BelesFloorPlan'
+import { BelesParkingPlan } from '@/components/beles/BelesParkingPlan'
 
 // Тип для ЖК (жилой комплекс)
 interface Complex {
@@ -24,7 +26,9 @@ export default function MarketplacePage() {
     const [companies, setCompanies] = useState<Company[]>([])
     const [complexes, setComplexes] = useState<Complex[]>([])
     const [apartments, setApartments] = useState<Apartment[]>([])
+    const [parkingSpaces, setParkingSpaces] = useState<any[]>([])
     const [buildings, setBuildings] = useState<Building[]>([])
+    const [viewMode, setViewMode] = useState<'apartments' | 'parking'>('apartments')
     const [loading, setLoading] = useState(false)
     const [loadingCompanies, setLoadingCompanies] = useState(true)
     const [loadingComplexes, setLoadingComplexes] = useState(false)
@@ -63,6 +67,9 @@ export default function MarketplacePage() {
             const loadData = async () => {
                 await fetchBuildings()
                 await fetchApartments()
+                if (complexSlug === 'beles-rezidens') {
+                    await fetchParkingSpaces()
+                }
             }
             loadData()
         }
@@ -122,7 +129,7 @@ export default function MarketplacePage() {
                     complexId: selectedComplexId ?? undefined,
                     status: 'ALL',
                     page: 0,
-                    size: 200
+                    size: 700
                 }
             })
             // Server-side filtering by complexId — no client filtering needed
@@ -131,6 +138,22 @@ export default function MarketplacePage() {
             console.error('Failed to fetch apartments:', error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const fetchParkingSpaces = async () => {
+        if (!selectedCompanyId) return
+        try {
+            // Using the newly added public endpoint in MarketplaceController
+            const { data } = await api.get('/marketplace/parking-spaces', {
+                params: { 
+                    companyId: selectedCompanyId,
+                    size: 500 
+                }
+            })
+            setParkingSpaces(data.content || data || [])
+        } catch (error) {
+            console.error('Failed to fetch parking spaces:', error)
         }
     }
 
@@ -319,12 +342,51 @@ export default function MarketplacePage() {
                 {/* STEP 3: Apartments for selected Complex */}
                 {selectedCompanyId && selectedComplexId && (
                     <>
+                        {/* Tab Selector */}
+                        {complexSlug === 'beles-rezidens' && (
+                            <div className="flex justify-center mb-6">
+                                <div className="inline-flex bg-white rounded-lg shadow-sm border border-gray-200 p-1">
+                                    <button
+                                        onClick={() => setViewMode('apartments')}
+                                        className={`px-6 py-2 rounded-md font-medium text-sm transition-colors ${
+                                            viewMode === 'apartments'
+                                                ? 'bg-primary-50 text-primary-700'
+                                                : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        Квартиры
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('parking')}
+                                        className={`px-6 py-2 rounded-md font-medium text-sm transition-colors ${
+                                            viewMode === 'parking'
+                                                ? 'bg-primary-50 text-primary-700'
+                                                : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        Паркинг
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Floor Plan View */}
                         {loading ? (
                             <div className="text-center py-12">
                                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
                                 <p className="mt-4 text-gray-600">Загрузка...</p>
                             </div>
+                        ) : viewMode === 'parking' ? (
+                            <BelesParkingPlan
+                                parkingSpaces={parkingSpaces}
+                                selectedBuildingId={buildings[0]?.id || 0}
+                            />
+                        ) : complexSlug === 'beles-rezidens' ? (
+                            <BelesFloorPlan
+                                apartments={apartments}
+                                buildings={buildings}
+                                companyId={selectedCompanyId}
+                            />
                         ) : (
                             <FloorPlanView
                                 apartments={apartments}

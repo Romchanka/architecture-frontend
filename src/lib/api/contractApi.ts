@@ -42,4 +42,7 @@ export const contractApi = {
 
     downloadPdf: (id: number) =>
         api.get(`/contracts/${id}/document`, { responseType: 'blob' }),
+
+    topConsultants: (days = 30) =>
+        api.get(`/contracts/top-consultants?days=${days}`),
 }
