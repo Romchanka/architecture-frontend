@@ -2,12 +2,13 @@ import axios from 'axios'
 
 const api = axios.create({
     baseURL: '/api',
+    withCredentials: true, // SECURITY: Send HttpOnly cookies automatically
     headers: {
         'Content-Type': 'application/json',
     },
 })
 
-// Request interceptor for adding auth token
+// Request interceptor for adding auth token (fallback if cookies are not used)
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token')
@@ -26,7 +27,12 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             // Token expired or invalid
             localStorage.removeItem('token')
-            window.location.href = '/login'
+            // Prevent redirect loop on public paths
+            const publicPaths = ['/login', '/register', '/', '/marketplace']
+            const isPublicPath = publicPaths.some(path => window.location.pathname === path || window.location.pathname.startsWith('/marketplace'))
+            if (!isPublicPath) {
+                window.location.href = '/login'
+            }
         }
         return Promise.reject(error)
     }

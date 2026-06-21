@@ -14,19 +14,19 @@ GIT STATUS:
 FILES MODIFIED:
 
 ```
-!`git diff --name-only origin/HEAD...`
+!`git diff --name-only HEAD`
 ```
 
 COMMITS:
 
 ```
-!`git log --no-decorate origin/HEAD...`
+!`git log --no-decorate -n 5 HEAD`
 ```
 
 DIFF CONTENT:
 
 ```
-!`git diff --merge-base origin/HEAD`
+!`git diff HEAD`
 ```
 
 Review the complete diff above. This contains all code changes in the PR.
