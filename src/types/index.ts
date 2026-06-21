@@ -92,7 +92,7 @@ export interface Contract {
     parkingPrice?: number
     discount?: number
     totalPrice: number
-    status: 'DRAFT' | 'PENDING_SIGNATURE' | 'SIGNED' | 'IN_PAYMENT' | 'PAID' | 'CANCELLED' | 'COMPLETED'
+    status: 'DRAFT' | 'PENDING_SIGNATURE' | 'SIGNED' | 'IN_PAYMENT' | 'PAID' | 'CANCELLED' | 'TERMINATED' | 'COMPLETED'
     signedDate?: string
     documentUrl?: string
     createdAt: string

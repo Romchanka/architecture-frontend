@@ -22,6 +22,8 @@ import EmployeesPage from './pages/admin/EmployeesPage'
 import ReportsPage from './pages/admin/ReportsPage'
 import InstallmentsPage from './pages/admin/InstallmentsPage'
 import DocumentCenterPage from './pages/admin/DocumentCenterPage'
+import CalendarPage from './pages/admin/CalendarPage'
+import LawyerOverduePage from './pages/admin/LawyerOverduePage'
 
 function App() {
     return (
@@ -58,6 +60,8 @@ function App() {
                 <Route path="reports" element={<RoleRoute path="/admin/reports"><ReportsPage /></RoleRoute>} />
                 <Route path="installments" element={<RoleRoute path="/admin/installments"><InstallmentsPage /></RoleRoute>} />
                 <Route path="documents" element={<RoleRoute path="/admin/documents"><DocumentCenterPage /></RoleRoute>} />
+                <Route path="calendar" element={<RoleRoute path="/admin/calendar"><CalendarPage /></RoleRoute>} />
+                <Route path="lawyer/overdue" element={<RoleRoute path="/admin/lawyer/overdue"><LawyerOverduePage /></RoleRoute>} />
             </Route>
         </Routes>
     )

@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 
 import api from '@/lib/api'
 import { useFloorPlanConfigs } from '@/hooks/useFloorPlanConfigs'
+import AuthWarningModal from '../AuthWarningModal'
 import './BelesFloorPlan.css' // Reuse the same CSS since layout is identical
 
 interface BelesParkingPlanProps {
@@ -36,6 +37,7 @@ export const BelesParkingPlan: React.FC<BelesParkingPlanProps> = ({
     const [selectedLevel, setSelectedLevel] = useState('-1')
     const [selectedSpace, setSelectedSpace] = useState<any | null>(null)
     const [bookingStatus, setBookingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+    const [showAuthWarning, setShowAuthWarning] = useState(false)
 
     const { configs, loading } = useFloorPlanConfigs(companyId, selectedBuildingId)
 
@@ -226,6 +228,11 @@ export const BelesParkingPlan: React.FC<BelesParkingPlanProps> = ({
     }, [onSpaceClick])
 
     const handleBookParking = async () => {
+        const token = localStorage.getItem('token')
+        if (!token) {
+            setShowAuthWarning(true)
+            return
+        }
         if (!selectedSpace || !companyId) return
         setBookingStatus('loading')
         try {
@@ -410,6 +417,11 @@ export const BelesParkingPlan: React.FC<BelesParkingPlanProps> = ({
                     </div>
                 </div>
             )}
+
+            <AuthWarningModal 
+                isOpen={showAuthWarning} 
+                onClose={() => setShowAuthWarning(false)} 
+            />
         </div>
     )
 }

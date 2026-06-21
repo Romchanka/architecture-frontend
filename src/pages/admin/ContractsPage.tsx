@@ -13,7 +13,6 @@ import {
     Modal, ModalBody, ModalFooter, SubmitButton, ModalError,
     FormField, inputCls, filterSelectCls,
 } from '@/components/admin'
-import SignaturePadModal from '@/components/admin/SignaturePadModal'
 
 interface ContractRow {
     id: number
@@ -31,8 +30,6 @@ interface ContractRow {
     status: string
     signedDate: string | null
     documentUrl: string | null
-    buyerSignatureUrl: string | null
-    companySignatureUrl: string | null
     createdAt: string
     notes: string | null
 }
@@ -42,7 +39,6 @@ const STATUS_MAP = CONTRACT_STATUS_MAP
 export default function ContractsPage() {
     const employee = useAdmin()
     const isReadOnly = employee.userType === 'ACCOUNTANT'
-    const canSign = employee.userType === 'CONSULTANT' || employee.userType === 'SUPER_USER' || employee.userType === 'ADMIN'
     const isSuperUser = employee.userType === 'SUPER_USER'
     const { data: contracts, loading, reload } = useApiData<ContractRow[]>('/contracts?size=200&sort=createdAt,desc', [])
     const [exec, createState] = useApiAction()
@@ -50,18 +46,15 @@ export default function ContractsPage() {
 
     // SSE: подписка на real-time уведомления о договорах
     useEventSource({
-        eventTypes: ['contract_created', 'contract_sent_for_signature', 'contract_buyer_signed', 'contract_signed'],
+        eventTypes: ['contract_created', 'contract_signed'],
         onEvent: (event) => {
             const d = event.data as Record<string, string>
             const labels: Record<string, string> = {
                 contract_created: '📄 Новый договор',
-                contract_sent_for_signature: '✉️ Отправлен на подпись',
-                contract_buyer_signed: '✍️ Покупатель подписал',
                 contract_signed: '✅ Договор подписан',
             }
             const label = labels[event.type] || 'Обновление договора'
-            showToast(`${label}: №${d.contractNumber || '?'} — ${d.buyerName || 'Покупатель'}`,
-                event.type === 'contract_buyer_signed' ? 'warning' : 'info')
+            showToast(`${label}: №${d.contractNumber || '?'} — ${d.buyerName || 'Покупатель'}`, 'info')
             reload()
         },
     })
@@ -69,7 +62,6 @@ export default function ContractsPage() {
     const [statusFilter, setStatusFilter] = useState('')
     const [showCreate, setShowCreate] = useState(false)
     const [createBookingId, setCreateBookingId] = useState('')
-    const [signContractId, setSignContractId] = useState<number | null>(null)
 
     // Double Check Popup state
     const [doubleCheckContract, setDoubleCheckContract] = useState<ContractRow | null>(null)
@@ -164,6 +156,7 @@ export default function ContractsPage() {
         PASSPORT_BACK: '🆔 Паспорт (обратная)',
         CONTRACT_SCAN: '📄 Скан договора',
         CERTIFICATE: '🎓 Справка',
+        LEGAL_NOTICE: '⚖️ Юридический документ',
         OTHER: '📎 Другое',
     }
 
@@ -180,11 +173,6 @@ export default function ContractsPage() {
         }
     )
 
-    const handleSendForSignature = (id: number) => exec(
-        () => contractApi.sendForSignature(id),
-        { confirm: 'Отправить договор покупателю на подпись?', onSuccess: reload }
-    )
-
     const handleConfirmPayment = () => {
         if (!doubleCheckContract) return
         exec(() => contractApi.confirmPayment(doubleCheckContract.id), {
@@ -195,14 +183,6 @@ export default function ContractsPage() {
                 reload()
             }
         })
-    }
-
-    const handleCompanySign = (signatureBlob: Blob) => {
-        if (!signContractId) return
-        exec(
-            () => contractApi.signByCompany(signContractId, employee.fullName || 'Представитель', signatureBlob),
-            { onSuccess: () => { setSignContractId(null); reload() } }
-        )
     }
 
     const handleDownload = async (id: number) => {
@@ -238,32 +218,12 @@ export default function ContractsPage() {
             },
         },
         { header: 'Статус', render: (c) => <StatusBadge status={c.status} colorMap={STATUS_MAP} /> },
-        {
-            header: 'Подписи', render: (c) => (
-                <div className="flex gap-1">
-                    {c.buyerSignatureUrl ? <span title="Покупатель подписал">✅👤</span> : <span title="Покупатель не подписал">⬜👤</span>}
-                    {c.companySignatureUrl ? <span title="Компания подписала">✅🏢</span> : <span title="Компания не подписала">⬜🏢</span>}
-                </div>
-            ),
-        },
+
         { header: 'Дата', render: (c) => <span className="text-sm text-gray-500">{fmtDate(c.signedDate || c.createdAt)}</span> },
         {
             header: 'Действия', render: (c) => (
                 <div className="flex gap-2 flex-wrap">
-                    {/* Отправить на подпись (DRAFT → PENDING_BUYER) */}
-                    {canSign && c.status === 'DRAFT' && (
-                        <button onClick={(e) => { e.stopPropagation(); handleSendForSignature(c.id) }}
-                            className="text-xs text-yellow-400 hover:text-yellow-300 transition-colors">
-                            ✉️ На подпись
-                        </button>
-                    )}
-                    {/* Подписать от компании (PENDING_COMPANY → SIGNED) */}
-                    {canSign && c.status === 'PENDING_COMPANY_SIGNATURE' && (
-                        <button onClick={(e) => { e.stopPropagation(); setSignContractId(c.id) }}
-                            className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
-                            ✍️ Подписать
-                        </button>
-                    )}
+
                     {/* Подтвердить оплату */}
                     {c.status !== 'PAID' && c.status !== 'COMPLETED' && c.status !== 'CANCELLED' && (
                         <button onClick={(e) => {
@@ -325,13 +285,7 @@ export default function ContractsPage() {
                 </ModalFooter>
             </Modal>
 
-            <SignaturePadModal
-                isOpen={signContractId !== null}
-                onClose={() => setSignContractId(null)}
-                onSign={handleCompanySign}
-                title="Подпись от имени компании"
-                signerLabel="Нарисуйте подпись представителя компании"
-            />
+
 
             {/* SUPER_USER: Buyer Edit Modal */}
             <Modal open={editBuyerContract !== null} onClose={() => setEditBuyerContract(null)} title={`👤 Редактирование покупателя — ${editBuyerContract?.contractNumber || ''}`} width="max-w-md">

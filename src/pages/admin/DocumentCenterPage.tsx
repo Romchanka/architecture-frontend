@@ -13,6 +13,8 @@ interface DocumentRow {
     userId: number
     userName: string
     userPhone: string
+    ocrStatus: string
+    ocrData: string
 }
 
 interface SearchResult {
@@ -24,15 +26,28 @@ interface SearchResult {
 }
 
 const DOC_TYPE_LABELS: Record<string, string> = {
-    PASSPORT: 'Паспорт',
-    CONTRACT: 'Договор',
-    OTHER: 'Другое',
+    PASSPORT_FRONT: 'Паспорт (лицевая сторона)',
+    PASSPORT_BACK: 'Паспорт (обратная сторона)',
+    CONTRACT_SCAN: 'Скан договора',
+    CERTIFICATE: 'Справка',
+    LEGAL_NOTICE: 'Юридический документ',
+    OTHER: 'Другой документ',
 }
 
 const DOC_TYPE_ICONS: Record<string, string> = {
-    PASSPORT: '🪪',
-    CONTRACT: '📑',
+    PASSPORT_FRONT: '🆔',
+    PASSPORT_BACK: '🆔',
+    CONTRACT_SCAN: '📄',
+    CERTIFICATE: '🎓',
+    LEGAL_NOTICE: '⚖️',
     OTHER: '📎',
+}
+
+const OCR_STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+    NONE: { label: 'Не обработан', cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+    PROCESSING: { label: 'Обработка...', cls: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 animate-pulse' },
+    COMPLETED: { label: 'OCR готов', cls: 'bg-green-500/10 text-green-400 border-green-500/20' },
+    FAILED: { label: 'Ошибка OCR', cls: 'bg-red-500/10 text-red-400 border-red-500/20' },
 }
 
 export default function DocumentCenterPage() {
@@ -42,17 +57,16 @@ export default function DocumentCenterPage() {
     const [docType, setDocType] = useState('')
     const [page, setPage] = useState(0)
     const [debouncedQuery, setDebouncedQuery] = useState('')
+    const [ocrProcessing, setOcrProcessing] = useState<Set<number>>(new Set())
+    const [ocrResults, setOcrResults] = useState<Record<number, any>>({})
+    const [expandedOcr, setExpandedOcr] = useState<number | null>(null)
 
-    // Debounce search query
     useEffect(() => {
         const t = setTimeout(() => setDebouncedQuery(query), 400)
         return () => clearTimeout(t)
     }, [query])
 
-    // Reset page on filter change
-    useEffect(() => {
-        setPage(0)
-    }, [debouncedQuery, docType])
+    useEffect(() => { setPage(0) }, [debouncedQuery, docType])
 
     const loadData = useCallback(async () => {
         setLoading(true)
@@ -62,20 +76,31 @@ export default function DocumentCenterPage() {
             if (docType) params.documentType = docType
             const { data } = await documentApi.search(params)
             setResult(data)
-        } catch (err) {
-            console.error('Error loading documents:', err)
-        } finally {
-            setLoading(false)
-        }
+        } catch (err) { console.error('Error loading documents:', err) }
+        finally { setLoading(false) }
     }, [debouncedQuery, docType, page])
 
-    useEffect(() => {
-        loadData()
-    }, [loadData])
+    useEffect(() => { loadData() }, [loadData])
 
-    const totalDocs = result
-        ? Object.values(result.typeStats).reduce((s, v) => s + v, 0)
-        : 0
+    const handleOcr = async (docId: number) => {
+        setOcrProcessing(prev => new Set(prev).add(docId))
+        try {
+            const { data } = await documentApi.processOcr(docId)
+            setOcrResults(prev => ({ ...prev, [docId]: data }))
+            setExpandedOcr(docId)
+            loadData() // Refresh to get updated ocrStatus
+        } catch (err) {
+            console.error('OCR failed:', err)
+        } finally {
+            setOcrProcessing(prev => { const n = new Set(prev); n.delete(docId); return n })
+        }
+    }
+
+    const totalDocs = result ? Object.values(result.typeStats).reduce((s, v) => s + v, 0) : 0
+
+    const parseOcrData = (jsonStr: string) => {
+        try { return JSON.parse(jsonStr || '{}') } catch { return {} }
+    }
 
     const columns: Column<DocumentRow>[] = [
         {
@@ -105,6 +130,39 @@ export default function DocumentCenterPage() {
                     {d.notes && <div className="text-xs text-gray-500 truncate max-w-xs">{d.notes}</div>}
                 </div>
             )
+        },
+        {
+            header: 'OCR', render: (d) => {
+                const status = d.ocrStatus || 'NONE'
+                const badge = OCR_STATUS_BADGE[status] || OCR_STATUS_BADGE.NONE
+                const isProcessing = ocrProcessing.has(d.id)
+                return (
+                    <div className="flex flex-col gap-1">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${badge.cls}`}>
+                            {badge.label}
+                        </span>
+                        {d.documentType === 'PASSPORT' && status !== 'COMPLETED' && (
+                            <button
+                                onClick={() => handleOcr(d.id)}
+                                disabled={isProcessing}
+                                className="text-[10px] text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50"
+                                id={`ocr-btn-${d.id}`}
+                            >
+                                {isProcessing ? '⏳ Обработка...' : '🔍 Распознать'}
+                            </button>
+                        )}
+                        {status === 'COMPLETED' && (
+                            <button
+                                onClick={() => setExpandedOcr(expandedOcr === d.id ? null : d.id)}
+                                className="text-[10px] text-green-400 hover:text-green-300 transition-colors"
+                                id={`ocr-view-${d.id}`}
+                            >
+                                {expandedOcr === d.id ? '▲ Скрыть' : '▼ Показать'}
+                            </button>
+                        )}
+                    </div>
+                )
+            }
         },
         {
             header: 'Дата загрузки', render: (d) => (
@@ -191,6 +249,39 @@ export default function DocumentCenterPage() {
                 rowKey={(d) => d.id}
                 emptyText={debouncedQuery ? `По запросу «${debouncedQuery}» ничего не найдено` : 'Документы не найдены'}
             />
+
+            {/* OCR Expanded Data Panel */}
+            {expandedOcr && (() => {
+                const doc = result?.documents.find(d => d.id === expandedOcr)
+                if (!doc) return null
+                const ocrData = ocrResults[expandedOcr]?.extractedFields || parseOcrData(doc.ocrData)
+                const fields = Object.entries(ocrData)
+                if (fields.length === 0) return null
+
+                const fieldLabels: Record<string, string> = {
+                    firstName: 'Имя', lastName: 'Фамилия', fullName: 'ФИО',
+                    passportNumber: 'Номер паспорта', birthDate: 'Дата рождения',
+                    issueDate: 'Дата выдачи', issuedBy: 'Кем выдан',
+                    phone: 'Телефон', documentType: 'Тип документа',
+                }
+
+                return (
+                    <div className="mt-4 rounded-xl border border-green-500/20 bg-green-500/5 p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-semibold text-green-400">🔍 Результаты OCR для: {doc.userName}</h3>
+                            <button onClick={() => setExpandedOcr(null)} className="text-xs text-gray-500 hover:text-gray-300">✕ Закрыть</button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                            {fields.map(([key, val]) => (
+                                <div key={key} className="rounded-lg bg-gray-900/50 border border-gray-800 p-3">
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">{fieldLabels[key] || key}</p>
+                                    <p className="text-sm text-white mt-0.5 font-medium">{val as string}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            })()}
 
             {/* Pagination */}
             {result && result.totalPages > 1 && (

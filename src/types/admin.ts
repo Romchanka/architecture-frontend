@@ -1,6 +1,6 @@
 // Employee / Admin types
 
-export type EmployeeRole = 'SUPER_USER' | 'ADMIN' | 'ACCOUNTANT' | 'CONSULTANT'
+export type EmployeeRole = 'SUPER_USER' | 'ADMIN' | 'ACCOUNTANT' | 'CONSULTANT' | 'LAWYER'
 
 export interface EmployeeUser {
     id: number
@@ -56,7 +56,7 @@ export interface ContractResponse {
     parkingPrice: number
     discount: number
     totalPrice: number
-    status: 'DRAFT' | 'PENDING_BUYER_SIGNATURE' | 'PENDING_COMPANY_SIGNATURE' | 'SIGNED' | 'IN_PAYMENT' | 'PAID' | 'CANCELLED' | 'COMPLETED'
+    status: 'DRAFT' | 'PENDING_BUYER_SIGNATURE' | 'PENDING_COMPANY_SIGNATURE' | 'SIGNED' | 'IN_PAYMENT' | 'PAID' | 'CANCELLED' | 'TERMINATED' | 'COMPLETED'
     signedDate: string | null
     documentUrl: string | null
     createdAt: string
@@ -121,6 +121,11 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
         { label: 'Отчёты', path: '/admin/reports', icon: '📈' },
     ],
+    LAWYER: [
+        { label: 'Дашборд', path: '/admin', icon: '📊' },
+        { label: 'Просрочки', path: '/admin/lawyer/overdue', icon: '⚖️' },
+        { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
+    ],
     ADMIN: [
         { label: 'Дашборд', path: '/admin', icon: '📊' },
         { label: 'Квартиры', path: '/admin/apartments', icon: '🏠' },
@@ -130,6 +135,7 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
         { label: 'Платежи', path: '/admin/transactions', icon: '💰' },
         { label: 'Рассрочки', path: '/admin/installments', icon: '📅' },
         { label: 'Документы', path: '/admin/documents', icon: '📁' },
+        { label: 'Календарь', path: '/admin/calendar', icon: '📅' },
         { label: 'Сотрудники', path: '/admin/employees', icon: '👥' },
         { label: 'Отчёты', path: '/admin/reports', icon: '📈' },
         { label: 'Истории', path: '/admin/stories', icon: '📱' },
@@ -142,7 +148,9 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
         { label: 'Парковки', path: '/admin/parking', icon: '🅿️' },
         { label: 'Платежи', path: '/admin/transactions', icon: '💰' },
         { label: 'Рассрочки', path: '/admin/installments', icon: '📅' },
+        { label: 'Просрочки', path: '/admin/lawyer/overdue', icon: '⚖️' },
         { label: 'Документы', path: '/admin/documents', icon: '📁' },
+        { label: 'Календарь', path: '/admin/calendar', icon: '📅' },
         { label: 'Сотрудники', path: '/admin/employees', icon: '👥' },
         { label: 'Отчёты', path: '/admin/reports', icon: '📈' },
         { label: 'Истории', path: '/admin/stories', icon: '📱' },
@@ -154,4 +162,5 @@ export const ROLE_LABELS: Record<EmployeeRole, string> = {
     ADMIN: 'Администратор',
     ACCOUNTANT: 'Бухгалтер',
     CONSULTANT: 'Консультант',
+    LAWYER: 'Юрист',
 }

@@ -45,13 +45,13 @@ export function useEventSource(options: UseEventSourceOptions) {
     const retryCount = useRef(0)
     const MAX_RETRIES = 30 // Stop after ~5 minutes of failures
 
-    const connect = useCallback(() => {
+    const connect = useCallback(async () => {
         // Prevent duplicate connections
         if (isConnecting.current) return
         if (eventSourceRef.current?.readyState === EventSource.OPEN) return
 
         const token = localStorage.getItem('token')
-        if (!token) return
+        if (!token || token === 'undefined' || token === 'null') return
 
         // Don't connect if token is expired
         if (isTokenExpired(token)) {
@@ -73,7 +73,23 @@ export function useEventSource(options: UseEventSourceOptions) {
 
         isConnecting.current = true
 
-        const url = `/api/events/subscribe?token=${encodeURIComponent(token)}`
+        // SECURITY: Obtain a short-lived SSE token instead of exposing main JWT in URL
+        let sseToken = token // fallback to main JWT
+        try {
+            const response = await fetch('/api/events/token', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            if (response.ok) {
+                const data = await response.json()
+                sseToken = data.sseToken
+            } else {
+                console.warn('[SSE] Failed to obtain SSE token, using main JWT as fallback')
+            }
+        } catch (e) {
+            console.warn('[SSE] SSE token fetch failed, using main JWT as fallback', e)
+        }
+
+        const url = `/api/events/subscribe?token=${encodeURIComponent(sseToken)}`
         const es = new EventSource(url)
         eventSourceRef.current = es
 

@@ -35,6 +35,7 @@ export const CONTRACT_STATUS_MAP: StatusMap = {
     IN_PAYMENT: { label: 'Оплата', cls: 'bg-blue-500/10 text-blue-400' },
     PAID: { label: 'Оплачен', cls: 'bg-purple-500/10 text-purple-400' },
     CANCELLED: { label: 'Отменён', cls: 'bg-red-500/10 text-red-400' },
+    TERMINATED: { label: 'Расторгнут', cls: 'bg-rose-500/10 text-rose-400' },
     COMPLETED: { label: 'Завершён', cls: 'bg-teal-500/10 text-teal-400' },
 }
 

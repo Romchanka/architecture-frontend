@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Apartment, Building } from '@/types'
 import api from '@/lib/api'
 import FloorPlanSVG from './FloorPlanSVG'
+import AuthWarningModal from './AuthWarningModal'
 
 interface FloorPlanViewProps {
     apartments: Apartment[]
@@ -29,7 +29,6 @@ const LAYOUT_IMAGES: Record<number, string> = {
 
 
 export default function FloorPlanView({ apartments, buildings, companyId, onApartmentClick }: FloorPlanViewProps) {
-    const navigate = useNavigate()
     const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(
         buildings.length > 0 ? buildings[0].id : null
     )
@@ -39,6 +38,7 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
     const [detailApartment, setDetailApartment] = useState<Apartment | null>(null)
     const [bookingStatus, setBookingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
     const [bookingError, setBookingError] = useState<string | null>(null)
+    const [showAuthWarning, setShowAuthWarning] = useState(false)
 
 
     const selectedBuilding = buildings.find(b => b.id === selectedBuildingId)
@@ -315,7 +315,7 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
                                     onClick={async () => {
                                         const token = localStorage.getItem('token')
                                         if (!token) {
-                                            navigate('/login', { state: { from: window.location.pathname } })
+                                            setShowAuthWarning(true)
                                             return
                                         }
                                         if (!companyId || !detailApartment) return
@@ -358,6 +358,11 @@ export default function FloorPlanView({ apartments, buildings, companyId, onApar
                     </div>
                 </div>
             )}
+
+            <AuthWarningModal 
+                isOpen={showAuthWarning} 
+                onClose={() => setShowAuthWarning(false)} 
+            />
         </div>
     )
 }

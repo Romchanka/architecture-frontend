@@ -148,6 +148,7 @@ export default function ApartmentsPage() {
     const [statusFilter, setStatusFilter] = useState('')
     const [roomsFilter, setRoomsFilter] = useState('')
     const [floorFilter, setFloorFilter] = useState('')
+    const [complexFilter, setComplexFilter] = useState('')
     const [search, setSearch] = useState('')
     const [selected, setSelected] = useState<ApartmentRow | null>(null)
     const [calcArea, setCalcArea] = useState('')
@@ -176,14 +177,21 @@ export default function ApartmentsPage() {
 
     const filtered = useMemo(() =>
         apartments.filter((a) => {
+            if (complexFilter && a.complexName !== complexFilter) return false
             if (statusFilter && a.status !== statusFilter) return false
             if (roomsFilter && a.rooms !== Number(roomsFilter)) return false
             if (floorFilter && a.floor !== Number(floorFilter)) return false
             if (search && !a.apartmentNumber.toLowerCase().includes(search.toLowerCase())) return false
             return true
         }),
-        [apartments, statusFilter, roomsFilter, floorFilter, search]
+        [apartments, complexFilter, statusFilter, roomsFilter, floorFilter, search]
     )
+
+    const complexes = useMemo(() => {
+        const set = new Set<string>()
+        apartments.forEach(a => { if (a.complexName) set.add(a.complexName) })
+        return Array.from(set).sort()
+    }, [apartments])
 
     const floors = useMemo(() => [...new Set(apartments.map((a) => a.floor))].sort((a, b) => a - b), [apartments])
     const rooms = useMemo(() => [...new Set(apartments.map((a) => a.rooms))].sort((a, b) => a - b), [apartments])
@@ -217,6 +225,7 @@ export default function ApartmentsPage() {
 
     const columns: Column<ApartmentRow>[] = [
         { header: 'Номер', render: (a) => <span className="text-sm text-white font-medium">№{a.apartmentNumber}</span> },
+        { header: 'ЖК', render: (a) => <span className="text-sm text-gray-400">{a.complexName || '—'}</span> },
         { header: 'Этаж', render: (a) => <span className="text-sm text-gray-400">{a.floor}</span> },
         { header: 'Комнаты', render: (a) => <span className="text-sm text-gray-400">{a.rooms}</span> },
         { header: 'Площадь (м²)', render: (a) => <span className="text-sm text-gray-300 font-mono">{a.areaTotal}</span> },
@@ -252,8 +261,12 @@ export default function ApartmentsPage() {
                 </div>
             )}
 
-            <FilterBar className="grid grid-cols-2 md:grid-cols-5">
+            <FilterBar className="grid grid-cols-2 md:grid-cols-6">
                 <input type="text" placeholder="Поиск по номеру..." value={search} onChange={(e) => setSearch(e.target.value)} className={filterInputCls} />
+                <select value={complexFilter} onChange={(e) => setComplexFilter(e.target.value)} className={filterSelectCls}>
+                    <option value="">Все ЖК</option>
+                    {complexes.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
                 <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterSelectCls}>
                     <option value="">Все статусы</option>
                     <option value="AVAILABLE">Свободна</option>
@@ -270,7 +283,7 @@ export default function ApartmentsPage() {
                     {floors.map((f) => <option key={f} value={f}>{f} этаж</option>)}
                 </select>
                 <div className="flex gap-2 items-center">
-                    <button onClick={() => { setStatusFilter(''); setRoomsFilter(''); setFloorFilter(''); setSearch('') }} className="text-sm text-gray-500 hover:text-white transition-colors flex-1">Сбросить</button>
+                    <button onClick={() => { setComplexFilter(''); setStatusFilter(''); setRoomsFilter(''); setFloorFilter(''); setSearch('') }} className="text-sm text-gray-500 hover:text-white transition-colors flex-1">Сбросить</button>
                     {/* View toggle */}
                     <div className="flex border border-gray-700 rounded-lg overflow-hidden">
                         <button

@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect, memo } from 'react'
 import { Apartment, Building } from '@/types'
 import api from '@/lib/api'
 import { useFloorPlanConfigs } from '@/hooks/useFloorPlanConfigs'
+import AuthWarningModal from '../AuthWarningModal'
 import './BelesFloorPlan.css'
 
 // Zone interface — previously imported from belesGeometry.ts, now defined locally
@@ -73,6 +74,7 @@ export default function BelesFloorPlan({ apartments, buildings, companyId }: Bel
     const tooltipRef = useRef<HTMLDivElement>(null)
     const [detailApt, setDetailApt] = useState<Apartment | null>(null)
     const [bookingStatus, setBookingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+    const [showAuthWarning, setShowAuthWarning] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const transformRef = useRef<HTMLDivElement>(null)
 
@@ -272,6 +274,11 @@ export default function BelesFloorPlan({ apartments, buildings, companyId }: Bel
     }, [])
 
     const handleBook = async () => {
+        const token = localStorage.getItem('token')
+        if (!token) {
+            setShowAuthWarning(true)
+            return
+        }
         if (!detailApt || !companyId) return
         setBookingStatus('loading')
         try {
@@ -480,6 +487,11 @@ export default function BelesFloorPlan({ apartments, buildings, companyId }: Bel
                     </div>
                 </div>
             )}
+
+            <AuthWarningModal 
+                isOpen={showAuthWarning} 
+                onClose={() => setShowAuthWarning(false)} 
+            />
         </div>
     )
 }
