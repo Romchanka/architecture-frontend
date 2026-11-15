@@ -2,6 +2,8 @@
 
 export type EmployeeRole = 'SUPER_USER' | 'ADMIN' | 'ACCOUNTANT' | 'CONSULTANT' | 'LAWYER'
 
+export const EMPLOYEE_ROLES: EmployeeRole[] = ['SUPER_USER', 'ADMIN', 'ACCOUNTANT', 'CONSULTANT', 'LAWYER']
+
 export interface EmployeeUser {
     id: number
     phone: string

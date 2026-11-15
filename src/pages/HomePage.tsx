@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
+import { EMPLOYEE_ROLES } from '@/types/admin'
 
 export default function HomePage() {
     const { isAuthenticated } = useAuthStore()
@@ -11,7 +12,7 @@ export default function HomePage() {
         if (isAuthenticated) {
             api.get('/auth/me')
                 .then(({ data: me }) => {
-                    if (me.userType && ['SUPER_USER', 'ADMIN', 'ACCOUNTANT', 'CONSULTANT'].includes(me.userType)) {
+                    if (me.userType && EMPLOYEE_ROLES.includes(me.userType)) {
                         navigate('/admin', { replace: true })
                     } else {
                         navigate('/marketplace', { replace: true })

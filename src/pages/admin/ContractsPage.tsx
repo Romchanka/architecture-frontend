@@ -224,6 +224,17 @@ export default function ContractsPage() {
             header: 'Действия', render: (c) => (
                 <div className="flex gap-2 flex-wrap">
 
+                    {/* Отметить подписанным (для старых или черновиков) */}
+                    {!isReadOnly && c.status === 'DRAFT' && (
+                        <button onClick={(e) => {
+                            e.stopPropagation();
+                            exec(() => contractApi.markSigned(c.id), { confirm: 'Подтвердить подписание оригинала договора?', onSuccess: reload });
+                        }}
+                            className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
+                            ✍️ Подписан
+                        </button>
+                    )}
+
                     {/* Подтвердить оплату */}
                     {c.status !== 'PAID' && c.status !== 'COMPLETED' && c.status !== 'CANCELLED' && (
                         <button onClick={(e) => {

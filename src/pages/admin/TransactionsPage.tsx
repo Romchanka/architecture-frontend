@@ -29,6 +29,7 @@ const CONTRACT_STATUS_MAP: Record<string, { label: string; cls: string }> = {
     IN_PAYMENT: { label: 'Ожидает оплаты', cls: 'bg-amber-500/15 text-amber-400' },
     PAID: { label: 'Оплачен', cls: 'bg-emerald-500/15 text-emerald-400' },
     COMPLETED: { label: 'Завершён', cls: 'bg-green-500/15 text-green-400' },
+    TERMINATED: { label: 'Расторгнут', cls: 'bg-rose-500/15 text-rose-400' },
     CANCELLED: { label: 'Отменён', cls: 'bg-red-500/15 text-red-400' },
 }
 
@@ -76,25 +77,25 @@ export default function TransactionsPage() {
     )
 
     // Confirm full payment
-    const handleConfirmPayment = (contract: ContractRow) => {
+    const handleConfirmPayment = async (contract: ContractRow) => {
         setConfirmingId(contract.id)
-        exec(
-            () => api.put(`/contracts/${contract.id}/confirm-payment`),
-            {
-                confirm: `Подтвердить полную оплату ${fmtPrice(contract.totalPrice)} сом за договор ${contract.contractNumber}?`,
-                errorFallback: 'Ошибка подтверждения оплаты',
-                onSuccess: () => {
-                    setConfirmingId(null)
-                    reload()
-                },
-            }
-        )
+        try {
+            await exec(
+                () => api.put(`/contracts/${contract.id}/confirm-payment`),
+                {
+                    confirm: `Подтвердить полную оплату ${fmtPrice(contract.totalPrice)} сом за договор ${contract.contractNumber}?`,
+                    errorFallback: 'Ошибка подтверждения оплаты',
+                    onSuccess: reload,
+                }
+            )
+        } finally {
+            setConfirmingId(null)
+        }
     }
 
     // Can confirm payment for these statuses
     const canConfirm = (status: string) =>
-        status === 'SIGNED' || status === 'IN_PAYMENT' ||
-        status === 'PENDING_BUYER_SIGNATURE' || status === 'PENDING_COMPANY_SIGNATURE'
+        status === 'SIGNED' || status === 'IN_PAYMENT'
 
     const columns: Column<ContractRow>[] = [
         { header: 'Договор', render: (c) => <span className="text-sm text-white font-medium">{c.contractNumber}</span> },

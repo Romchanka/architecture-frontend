@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import api from '@/lib/api'
-import { EmployeeUser } from '@/types/admin'
+import { EmployeeUser, EMPLOYEE_ROLES } from '@/types/admin'
 
 interface AdminGuardProps {
     children: React.ReactNode
@@ -25,7 +25,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
         api.get('/auth/me')
             .then(({ data }) => {
                 // EmployeeUser has userType field, regular User does not
-                if (data.userType && ['SUPER_USER', 'ADMIN', 'ACCOUNTANT', 'CONSULTANT'].includes(data.userType)) {
+                if (data.userType && EMPLOYEE_ROLES.includes(data.userType)) {
                     setEmployee({
                         id: data.id,
                         phone: data.phone,

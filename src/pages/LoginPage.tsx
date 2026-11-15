@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
 import { LoginResponse, User } from '@/types'
+import { EMPLOYEE_ROLES } from '@/types/admin'
 
 export default function LoginPage() {
     const navigate = useNavigate()
@@ -36,7 +37,7 @@ export default function LoginPage() {
             // Check if this is an employee user - redirect to admin panel
             try {
                 const { data: me } = await api.get('/auth/me')
-                if (me.userType && ['SUPER_USER', 'ADMIN', 'ACCOUNTANT', 'CONSULTANT'].includes(me.userType)) {
+                if (me.userType && EMPLOYEE_ROLES.includes(me.userType)) {
                     navigate('/admin')
                     return
                 }

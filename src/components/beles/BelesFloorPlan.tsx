@@ -23,7 +23,6 @@ interface ZonePolygonProps {
 
 const ZonePolygon = memo(function ZonePolygon({ zone, apt, zoom, onClick }: ZonePolygonProps) {
     const colors = STATUS_COLORS[apt.status] || STATUS_COLORS.AVAILABLE
-    const isSoldOrInstallment = apt.status === 'SOLD' || (apt.status as string) === 'INSTALLMENT'
 
     return (
         <polygon
@@ -39,8 +38,8 @@ const ZonePolygon = memo(function ZonePolygon({ zone, apt, zoom, onClick }: Zone
             stroke={apt.status !== 'AVAILABLE' ? colors.stroke : 'rgba(255,255,255,0.12)'}
             strokeWidth={0.6 / zoom}
             strokeLinejoin="round"
-            cursor={isSoldOrInstallment ? 'default' : 'pointer'}
-            onClick={() => !isSoldOrInstallment && onClick(apt)}
+            cursor="pointer"
+            onClick={() => onClick(apt)}
         />
     )
 })

@@ -17,22 +17,10 @@ export const contractApi = {
     createFromBooking: (bookingId: string | number) =>
         api.post(`/contracts/from-booking/${bookingId}`),
 
-    sign: (id: number) =>
-        api.put(`/contracts/${id}/sign`),
+    // ── Подписание очно / статус ──
 
-    // ── Электронная подпись ──
-
-    sendForSignature: (id: number) =>
-        api.put(`/contracts/${id}/send-for-signature`),
-
-    signByCompany: (id: number, companyRepName: string, signatureBlob: Blob) => {
-        const formData = new FormData()
-        formData.append('companyRepName', companyRepName)
-        formData.append('signature', signatureBlob, 'signature.png')
-        return api.put(`/contracts/${id}/sign-company`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        })
-    },
+    markSigned: (id: number) =>
+        api.put(`/contracts/${id}/mark-signed`),
 
     confirmPayment: (id: number) =>
         api.put(`/contracts/${id}/confirm-payment`),

@@ -45,6 +45,8 @@ export function useEventSource(options: UseEventSourceOptions) {
     const retryCount = useRef(0)
     const MAX_RETRIES = 30 // Stop after ~5 minutes of failures
 
+    const eventTypesKey = eventTypes ? eventTypes.slice().sort().join(',') : ''
+
     const connect = useCallback(async () => {
         // Prevent duplicate connections
         if (isConnecting.current) return
@@ -94,7 +96,7 @@ export function useEventSource(options: UseEventSourceOptions) {
         eventSourceRef.current = es
 
         // Listen for specific event types
-        const types = eventTypes || ['booking_created', 'booking_updated']
+        const types = eventTypesKey ? eventTypesKey.split(',') : ['booking_created', 'booking_updated']
         types.forEach(type => {
             es.addEventListener(type, (e: MessageEvent) => {
                 try {
@@ -132,7 +134,7 @@ export function useEventSource(options: UseEventSourceOptions) {
                 reconnectTimeout.current = setTimeout(connect, delay)
             }
         }
-    }, [eventTypes, autoReconnect])
+    }, [eventTypesKey, autoReconnect])
 
     useEffect(() => {
         connect()
