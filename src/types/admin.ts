@@ -111,6 +111,8 @@ export interface ParkingSpaceResponse {
 export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon: string }[]> = {
     CONSULTANT: [
         { label: 'Дашборд', path: '/admin', icon: '📊' },
+        { label: 'Обзвон и Воронка', path: '/admin/crm-funnel', icon: '📞' },
+        { label: 'Мессенджер', path: '/admin/messenger', icon: '💬' },
         { label: 'Квартиры', path: '/admin/apartments', icon: '🏠' },
         { label: 'Бронирования', path: '/admin/bookings', icon: '📋' },
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
@@ -118,6 +120,7 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
     ],
     ACCOUNTANT: [
         { label: 'Дашборд', path: '/admin', icon: '📊' },
+        { label: 'Мессенджер', path: '/admin/messenger', icon: '💬' },
         { label: 'Платежи', path: '/admin/transactions', icon: '💰' },
         { label: 'Рассрочки', path: '/admin/installments', icon: '📅' },
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
@@ -125,11 +128,14 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
     ],
     LAWYER: [
         { label: 'Дашборд', path: '/admin', icon: '📊' },
+        { label: 'Мессенджер', path: '/admin/messenger', icon: '💬' },
         { label: 'Просрочки', path: '/admin/lawyer/overdue', icon: '⚖️' },
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
     ],
     ADMIN: [
         { label: 'Дашборд', path: '/admin', icon: '📊' },
+        { label: 'Обзвон и Воронка', path: '/admin/crm-funnel', icon: '📞' },
+        { label: 'Мессенджер', path: '/admin/messenger', icon: '💬' },
         { label: 'Квартиры', path: '/admin/apartments', icon: '🏠' },
         { label: 'Бронирования', path: '/admin/bookings', icon: '📋' },
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },
@@ -144,6 +150,8 @@ export const ADMIN_NAV: Record<EmployeeRole, { label: string; path: string; icon
     ],
     SUPER_USER: [
         { label: 'Дашборд', path: '/admin', icon: '📊' },
+        { label: 'Обзвон и Воронка', path: '/admin/crm-funnel', icon: '📞' },
+        { label: 'Мессенджер', path: '/admin/messenger', icon: '💬' },
         { label: 'Квартиры', path: '/admin/apartments', icon: '🏠' },
         { label: 'Бронирования', path: '/admin/bookings', icon: '📋' },
         { label: 'Договоры', path: '/admin/contracts', icon: '📄' },

@@ -24,6 +24,8 @@ import InstallmentsPage from './pages/admin/InstallmentsPage'
 import DocumentCenterPage from './pages/admin/DocumentCenterPage'
 import CalendarPage from './pages/admin/CalendarPage'
 import LawyerOverduePage from './pages/admin/LawyerOverduePage'
+import CrmFunnelAndDialerPage from './pages/admin/CrmFunnelAndDialerPage'
+import EmployeeMessengerPage from './pages/admin/EmployeeMessengerPage'
 
 function App() {
     return (
@@ -50,6 +52,8 @@ function App() {
                 }
             >
                 <Route index element={<AdminDashboard />} />
+                <Route path="crm-funnel" element={<RoleRoute path="/admin/crm-funnel"><CrmFunnelAndDialerPage /></RoleRoute>} />
+                <Route path="messenger" element={<RoleRoute path="/admin/messenger"><EmployeeMessengerPage /></RoleRoute>} />
                 <Route path="apartments" element={<RoleRoute path="/admin/apartments"><ApartmentsPage /></RoleRoute>} />
                 <Route path="bookings" element={<RoleRoute path="/admin/bookings"><BookingsPage /></RoleRoute>} />
                 <Route path="contracts" element={<RoleRoute path="/admin/contracts"><ContractsPage /></RoleRoute>} />
